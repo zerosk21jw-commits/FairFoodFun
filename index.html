@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check Splitter & Bill Calculator</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans antialiased pb-12" x-data="billSplitter()">
+
+  <!-- Header -->
+  <header class="bg-indigo-600 text-white py-6 shadow-md mb-8">
+    <div class="max-w-4xl mx-auto px-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <i data-lucide="receipt" class="w-8 h-8"></i>
+        <h1 class="text-2xl font-bold tracking-tight">Check Splitter</h1>
+      </div>
+      <button @click="resetAll()" class="text-xs bg-indigo-500 hover:bg-indigo-700 text-white py-1.5 px-3 rounded-lg transition flex items-center gap-1 font-medium">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset All
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+
+    <!-- Left Column: Inputs & Setup -->
+    <div class="md:col-span-2 space-y-6">
+
+      <!-- Step 1: People -->
+      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i>
+          1. Who's Splitting?
+        </h2>
+
+        <form @submit.prevent="addPerson()" class="flex gap-2 mb-4">
+          <input 
+            type="text" 
+            x-model="newPersonName" 
+            placeholder="Enter person's name..." 
+            class="flex-1 px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+          >
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition flex items-center gap-1">
+            <i data-lucide="plus" class="w-4 h-4"></i> Add
+          </button>
+        </form>
+
+        <div class="flex flex-wrap gap-2">
+          <template x-for="(person, index) in people" :key="index">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium text-sm rounded-full border border-indigo-100">
+              <span x-text="person"></span>
+              <button @click="removePerson(index)" class="text-indigo-400 hover:text-indigo-600 rounded-full p-0.5">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              </button>
+            </span>
+          </template>
+          <template x-if="people.length === 0">
+            <p class="text-xs text-slate-400 italic">No people added yet. Add at least one person to start.</p>
+          </template>
+        </div>
+      </section>
+
+      <!-- Step 2: Items -->
+      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <i data-lucide="shopping-bag" class="w-5 h-5 text-indigo-600"></i>
+          2. Items / Dishes
+        </h2>
+
+        <form @submit.prevent="addItem()" class="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div class="grid grid-cols-3 gap-2">
+            <input 
+              type="text" 
+              x-model="newItemName" 
+              placeholder="Item name (e.g. Burger)" 
+              class="col-span-2 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            >
+            <div class="relative">
+              <span class="absolute left-3 top-2 text-slate-400 text-sm">$</span>
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0" 
+                x-model="newItemPrice" 
+                placeholder="0.00" 
+                class="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              >
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1.5">Who ate/shared this?</label>
+            <div class="flex flex-wrap gap-2">
+              <template x-for="(person, idx) in people" :key="idx">
+                <label class="inline-flex items-center gap-1.5 px-3 py-1 border rounded-lg text-xs cursor-pointer select-none transition"
+                  :class="newItemAssignees.includes(person) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'">
+                  <input type="checkbox" :value="person" x-model="newItemAssignees" class="hidden">
+                  <span x-text="person"></span>
+                </label>
+              </template>
+              <template x-if="people.length === 0">
+                <p class="text-xs text-slate-400">Please add people first.</p>
+              </template>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2 rounded-lg transition flex items-center justify-center gap-1">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Item
+          </button>
+        </form>
+
+        <!-- Item List -->
+        <div class="space-y-2">
+          <template x-for="(item, index) in items" :key="index">
+            <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
+              <div>
+                <p class="font-medium text-sm text-slate-800" x-text="item.name"></p>
+                <p class="text-xs text-slate-500">Shared by: <span class="font-medium text-indigo-600" x-text="item.assignees.join(', ') || 'Everyone'"></span></p>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="font-semibold text-sm text-slate-900" x-text="'$' + Number(item.price).toFixed(2)"></span>
+                <button @click="removeItem(index)" class="text-slate-400 hover:text-red-500 transition">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+          <template x-if="items.length === 0">
+            <p class="text-xs text-slate-400 italic text-center py-4">No items added to check yet.</p>
+          </template>
+        </div>
+      </section>
+
+      <!-- Step 3: Tax & Tip -->
+      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <i data-lucide="calculator" class="w-5 h-5 text-indigo-600"></i>
+          3. Tax & Tip
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Tax Input -->
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Tax Total ($)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0" 
+                x-model.number="tax" 
+                placeholder="0.00" 
+                class="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              >
+            </div>
+          </div>
+
+          <!-- Tip Input -->
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Tip Amount ($ or %)</label>
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <span class="absolute left-3 top-2.5 text-slate-400 text-sm" x-text="tipType === 'amount' ? '$' : '%'"></span>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  min="0" 
+                  x-model.number="tipValue" 
+                  placeholder="0.00" 
+                  class="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                >
+              </div>
+              <button 
+                @click="tipType = tipType === 'amount' ? 'percent' : 'amount'"
+                class="px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                x-text="tipType === 'amount' ? '$ Mode' : '% Mode'">
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tip Presets -->
+        <div class="flex gap-2 mt-3" x-show="tipType === 'percent'">
+          <template x-for="pct in [15, 18, 20, 25]" :key="pct">
+            <button 
+              @click="tipValue = pct" 
+              class="px-2.5 py-1 text-xs border rounded-lg transition"
+              :class="tipValue === pct ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
+              <span x-text="pct + '%'"></span>
+            </button>
+          </template>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Right Column: Results Summary -->
+    <div class="space-y-6">
+
+      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600"></i>
+            Split Summary
+          </span>
+        </h2>
+
+        <!-- Check Overview -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 mb-6 text-sm">
+          <div class="flex justify-between text-slate-600">
+            <span>Subtotal:</span>
+            <span class="font-medium" x-text="'$' + subtotal.toFixed(2)"></span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span>Tax:</span>
+            <span class="font-medium" x-text="'$' + taxTotal.toFixed(2)"></span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span>Tip:</span>
+            <span class="font-medium" x-text="'$' + tipTotal.toFixed(2)"></span>
+          </div>
+          <div class="border-t border-slate-200 pt-2 flex justify-between font-bold text-slate-900 text-base">
+            <span>Grand Total:</span>
+            <span x-text="'$' + grandTotal.toFixed(2)"></span>
+          </div>
+        </div>
+
+        <!-- Individual Breakdown -->
+        <div class="space-y-4">
+          <template x-for="(summary, person) in individualTotals" :key="person">
+            <div class="p-3 border border-slate-200 rounded-xl space-y-1 bg-slate-50/50">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold text-slate-900" x-text="person"></span>
+                <span class="font-bold text-indigo-600 text-base" x-text="'$' + summary.total.toFixed(2)"></span>
+              </div>
+              <div class="text-xs text-slate-500 flex justify-between">
+                <span>Items: $<span x-text="summary.subtotal.toFixed(2)"></span></span>
+                <span>Tax: $<span x-text="summary.tax.toFixed(2)"></span></span>
+                <span>Tip: $<span x-text="summary.tip.toFixed(2)"></span></span>
+              </div>
+            </div>
+          </template>
+
+          <template x-if="people.length === 0">
+            <p class="text-xs text-slate-400 italic text-center py-4">Add people and items to view total calculations.</p>
+          </template>
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+
+    function billSplitter() {
+      return {
+        people: ['Alex', 'Sam', 'Taylor'],
+        newPersonName: '',
+        items: [
+          { name: 'Burger', price: 15.00, assignees: ['Alex'] },
+          { name: 'Pizza', price: 22.00, assignees: ['Sam', 'Taylor'] },
+          { name: 'Fries & Drinks', price: 12.00, assignees: ['Alex', 'Sam', 'Taylor'] }
+        ],
+        newItemName: '',
+        newItemPrice: '',
+        newItemAssignees: [],
+        tax: 4.00,
+        tipValue: 18,
+        tipType: 'percent', // 'percent' or 'amount'
+
+        addPerson() {
+          const name = this.newPersonName.trim();
+          if (name && !this.people.includes(name)) {
+            this.people.push(name);
+            this.newPersonName = '';
+            this.refreshIcons();
+          }
+        },
+
+        removePerson(index) {
+          const removedName = this.people[index];
+          this.people.splice(index, 1);
+          // Remove assigned person from items
+          this.items.forEach(item => {
+            item.assignees = item.assignees.filter(p => p !== removedName);
+          });
+          this.refreshIcons();
+        },
+
+        addItem() {
+          const price = parseFloat(this.newItemPrice);
+          if (this.newItemName.trim() && !isNaN(price) && price > 0) {
+            this.items.push({
+              name: this.newItemName.trim(),
+              price: price,
+              assignees: this.newItemAssignees.length > 0 ? [...this.newItemAssignees] : [...this.people]
+            });
+            this.newItemName = '';
+            this.newItemPrice = '';
+            this.newItemAssignees = [];
+            this.refreshIcons();
+          }
+        },
+
+        removeItem(index) {
+          this.items.splice(index, 1);
+          this.refreshIcons();
+        },
+
+        resetAll() {
+          this.people = [];
+          this.items = [];
+          this.tax = 0;
+          this.tipValue = 0;
+          this.refreshIcons();
+        },
+
+        get subtotal() {
+          return this.items.reduce((sum, item) => sum + Number(item.price || 0), 0);
+        },
+
+        get taxTotal() {
+          return Number(this.tax || 0);
+        },
+
+        get tipTotal() {
+          if (this.tipType === 'percent') {
+            return (this.subtotal * (Number(this.tipValue || 0) / 100));
+          }
+          return Number(this.tipValue || 0);
+        },
+
+        get grandTotal() {
+          return this.subtotal + this.taxTotal + this.tipTotal;
+        },
+
+        get individualTotals() {
+          const summary = {};
+
+          this.people.forEach(p => {
+            summary[p] = { subtotal: 0, tax: 0, tip: 0, total: 0 };
+          });
+
+          if (this.people.length === 0) return summary;
+
+          // Calculate subtotal per person
+          this.items.forEach(item => {
+            const assignees = item.assignees.length > 0 ? item.assignees : this.people;
+            const splitPrice = item.price / assignees.length;
+
+            assignees.forEach(p => {
+              if (summary[p]) {
+                summary[p].subtotal += splitPrice;
+              }
+            });
+          });
+
+          // Proportional Tax & Tip Split based on subtotal ratio
+          const currentSubtotal = this.subtotal;
+
+          this.people.forEach(p => {
+            const ratio = currentSubtotal > 0 ? (summary[p].subtotal / currentSubtotal) : (1 / this.people.length);
+            summary[p].tax = this.taxTotal * ratio;
+            summary[p].tip = this.tipTotal * ratio;
+            summary[p].total = summary[p].subtotal + summary[p].tax + summary[p].tip;
+          });
+
+          return summary;
+        },
+
+        refreshIcons() {
+          this.$nextTick(() => {
+            lucide.createIcons();
+          });
+        }
+      };
+    }
+  </script>
+</body>
+</html>
