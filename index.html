@@ -41,9 +41,8 @@
           1. Who's Splitting?
         </h2>
 
-        <!-- Method A: Custom Name Input -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Option A: Type Custom Name</label>
+        <!-- Custom Name Input + Quick-Select Toggle Button -->
+        <div class="space-y-3">
           <form @submit.prevent="addCustomPerson()" class="flex gap-2">
             <input 
               type="text" 
@@ -55,26 +54,40 @@
               <i data-lucide="plus" class="w-4 h-4"></i> Add
             </button>
           </form>
-        </div>
 
-        <!-- Method B: Quick-Select from Saved Repo -->
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <label class="block text-xs font-semibold text-slate-600">Option B: Quick-Select Saved Friends</label>
-            <span class="text-[11px] text-slate-400">Click name to toggle</span>
-          </div>
-          <div class="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-xl">
-            <template x-for="name in savedRepo" :key="name">
-              <button 
-                type="button"
-                @click="togglePerson(name)"
-                class="text-xs px-2.5 py-1 rounded-lg border transition font-medium flex items-center gap-1"
-                :class="people.includes(name) ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
-              >
-                <span x-text="name"></span>
-                <i x-show="people.includes(name)" data-lucide="check" class="w-3 h-3"></i>
-              </button>
-            </template>
+          <div>
+            <button 
+              type="button" 
+              @click="showRepo = !showRepo" 
+              class="w-full text-xs font-semibold px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-200 transition flex items-center justify-between"
+            >
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="user-check" class="w-4 h-4 text-indigo-600"></i>
+                Select from Saved Friends List
+              </span>
+              <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': showRepo }"></i>
+            </button>
+
+            <!-- Collapsible Friends Repo List -->
+            <div x-show="showRepo" x-cloak x-transition class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl max-h-48 overflow-y-auto">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-[11px] font-medium text-slate-500">Tap a name to add/remove:</span>
+                <span class="text-[11px] text-indigo-600 font-semibold" x-text="people.length + ' selected'"></span>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                <template x-for="name in savedRepo" :key="name">
+                  <button 
+                    type="button"
+                    @click="togglePerson(name)"
+                    class="text-xs px-2.5 py-1 rounded-lg border transition font-medium flex items-center gap-1"
+                    :class="people.includes(name) ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+                  >
+                    <span x-text="name"></span>
+                    <i x-show="people.includes(name)" data-lucide="check" class="w-3 h-3"></i>
+                  </button>
+                </template>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -82,7 +95,7 @@
         <div class="pt-2 border-t border-slate-100">
           <label class="block text-xs font-semibold text-slate-600 mb-2">Active Diners on this Check:</label>
           <div class="flex flex-wrap gap-2">
-            <template x-for="(person, index) in people" :key="person">
+            <template x-for="person in people" :key="person">
               <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium text-sm rounded-full border border-indigo-100">
                 <span x-text="person"></span>
                 <button @click="removePerson(person)" class="text-indigo-400 hover:text-indigo-600 rounded-full p-0.5">
@@ -91,7 +104,7 @@
               </span>
             </template>
             <template x-if="people.length === 0">
-              <p class="text-xs text-slate-400 italic">No diners selected yet. Type a name or tap options from the list above.</p>
+              <p class="text-xs text-slate-400 italic">No diners selected yet. Type a name or tap options from the saved list.</p>
             </template>
           </div>
         </div>
@@ -244,10 +257,19 @@
         <!-- Individual Breakdown -->
         <div class="space-y-3">
           <template x-for="(summary, person) in individualTotals" :key="person">
-            <div class="p-3 border border-slate-200 rounded-xl space-y-1 bg-slate-50/50">
+            <div class="p-3 border border-slate-200 rounded-xl space-y-2 bg-slate-50/50">
               <div class="flex justify-between items-center">
                 <span class="font-semibold text-slate-900" x-text="person"></span>
-                <span class="font-bold text-indigo-600 text-base" x-text="'$' + summary.total.toFixed(2)"></span>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-indigo-600 text-base" x-text="'$' + summary.total.toFixed(2)"></span>
+                  <button 
+                    @click="copyIndividualText(person, summary)" 
+                    class="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded transition"
+                    title="Copy Kakao / Venmo Text"
+                  >
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
               </div>
               <div class="text-xs text-slate-500 flex justify-between">
                 <span>Items: $<span x-text="summary.subtotal.toFixed(2)"></span></span>
@@ -275,11 +297,12 @@
 
     function billSplitter() {
       return {
+        showRepo: false,
         savedRepo: [
           'Tim Kang', 'Jon', 'Janet', 'Becky', 'Chansoo', 'Yoonmi', 
           'Jaeyoung', 'John', 'Bianca', 'Eric', 'Susan', 'Choun', 
           'Suzie', 'David', 'Flopy', 'Tim Kim', 'Yeji', 'Wilson', 
-          'Aaron', 'Jessica', 'Kaitlyn', 'Lakisha', 'Aja', 'Jaymie', 'Lizmar'
+          'Jessica', 'Kaitlyn', 'Lakisha', 'Aja', 'Jaymie', 'Lizmar'
         ],
         people: JSON.parse(localStorage.getItem('cs_people')) || [],
         newPersonName: '',
@@ -317,7 +340,6 @@
 
         removePerson(name) {
           this.people = this.people.filter(p => p !== name);
-          // Remove from items as assignee
           this.items.forEach(item => {
             item.assignees = item.assignees.filter(p => p !== name);
           });
@@ -353,6 +375,12 @@
           this.refreshIcons();
         },
 
+        copyIndividualText(person, summary) {
+          const text = `Hey ${person}! Your check total is $${summary.total.toFixed(2)} (Subtotal: $${summary.subtotal.toFixed(2)}, Tax: $${summary.tax.toFixed(2)}, Tip: $${summary.tip.toFixed(2)})`;
+          navigator.clipboard.writeText(text);
+          alert(`Copied text for ${person} to clipboard! Ready to paste into KakaoTalk or Venmo.`);
+        },
+
         get subtotal() {
           return this.items.reduce((sum, item) => sum + Number(item.price || 0), 0);
         },
@@ -378,7 +406,6 @@
 
           if (this.people.length === 0) return summary;
 
-          // Calculate subtotal per person
           this.items.forEach(item => {
             const assignees = item.assignees.length > 0 ? item.assignees : this.people;
             const splitPrice = item.price / assignees.length;
@@ -390,7 +417,6 @@
             });
           });
 
-          // Proportional Tax & Tip Split based on subtotal ratio
           const currentSubtotal = this.subtotal;
 
           this.people.forEach(p => {
