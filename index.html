@@ -171,4 +171,363 @@
 
         <div class="space-y-3">
           <template x-for="(item, index) in items" :key="index">
-            <div class="bg-white
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 transition">
+              
+              <div x-show="editingIndex !== index" class="flex items-center justify-between">
+                <div>
+                  <p class="font-medium text-sm text-slate-800 dark:text-slate-200" x-text="item.name"></p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Shared by: <span class="font-medium text-indigo-600 dark:text-indigo-400" x-text="item.assignees.join(', ')"></span></p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="font-semibold text-sm text-slate-900 dark:text-white" x-text="'$' + Number(item.price).toFixed(2)"></span>
+                  <button @click="startEditItem(index)" class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition" title="Edit Item">
+                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                  </button>
+                  <button @click="removeItem(index)" class="text-slate-400 hover:text-red-500 transition" title="Delete Item">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div x-show="editingIndex === index" x-cloak class="space-y-3 bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                <div class="grid grid-cols-3 gap-2">
+                  <input 
+                    type="text" 
+                    x-model="editItemName" 
+                    class="col-span-2 px-3 py-1.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                  <div class="relative">
+                    <span class="absolute left-2.5 top-1.5 text-slate-400 text-sm">$</span>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      min="0" 
+                      x-model="editItemPrice" 
+                      class="w-full pl-6 pr-2 py-1.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                    >
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">Edit Assignees:</label>
+                  <div class="flex flex-wrap gap-1.5">
+                    <template x-for="person in people" :key="person">
+                      <label class="inline-flex items-center gap-1 px-2.5 py-1 border rounded-md text-xs cursor-pointer select-none transition"
+                        :class="editItemAssignees.includes(person) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600'">
+                        <input type="checkbox" :value="person" x-model="editItemAssignees" class="hidden">
+                        <span x-text="person"></span>
+                      </label>
+                    </template>
+                  </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-1">
+                  <button @click="cancelEditItem()" class="px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition">Cancel</button>
+                  <button @click="saveEditItem(index)" class="px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">Save Changes</button>
+                </div>
+              </div>
+
+            </div>
+          </template>
+          <template x-if="items.length === 0">
+            <p class="text-xs text-slate-400 dark:text-slate-500 italic text-center py-4">No items added to check yet.</p>
+          </template>
+        </div>
+      </section>
+
+      <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors duration-200">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <i data-lucide="calculator" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+          3. Tax & Tip
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tax Total ($)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0" 
+                x-model.number="tax" 
+                placeholder="0.00" 
+                class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              >
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tip Paid ($)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0" 
+                x-model.number="tip" 
+                placeholder="0.00" 
+                class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="space-y-6">
+
+      <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 sticky top-6 transition-colors duration-200">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+          Split Summary
+        </h2>
+
+        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 mb-6 text-sm">
+          <div class="flex justify-between text-slate-600 dark:text-slate-400">
+            <span>Subtotal:</span>
+            <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + subtotal.toFixed(2)"></span>
+          </div>
+          <div class="flex justify-between text-slate-600 dark:text-slate-400">
+            <span>Tax:</span>
+            <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + taxTotal.toFixed(2)"></span>
+          </div>
+          <div class="flex justify-between text-slate-600 dark:text-slate-400">
+            <span>Tip:</span>
+            <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + tipTotal.toFixed(2)"></span>
+          </div>
+          <div class="border-t border-slate-200 dark:border-slate-700 pt-2 flex justify-between font-bold text-slate-900 dark:text-white text-base">
+            <span>Grand Total:</span>
+            <span x-text="'$' + grandTotal.toFixed(2)"></span>
+          </div>
+        </div>
+
+        <div class="space-y-3 mb-6">
+          <template x-for="(summary, person) in individualTotals" :key="person">
+            <div class="p-3 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2 bg-slate-50/50 dark:bg-slate-900/50">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold text-slate-900 dark:text-slate-100" x-text="person"></span>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-indigo-600 dark:text-indigo-400 text-base" x-text="'$' + summary.total.toFixed(2)"></span>
+                  <button 
+                    @click="copyIndividualText(person, summary)" 
+                    class="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition"
+                    title="Copy Text Summary"
+                  >
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 flex justify-between">
+                <span>Items: $<span x-text="summary.subtotal.toFixed(2)"></span></span>
+                <span>Tax: $<span x-text="summary.tax.toFixed(2)"></span></span>
+                <span>Tip: $<span x-text="summary.tip.toFixed(2)"></span></span>
+              </div>
+            </div>
+          </template>
+
+          <template x-if="people.length === 0">
+            <p class="text-xs text-slate-400 dark:text-slate-500 italic text-center py-4">Add people and items to view calculated totals.</p>
+          </template>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-center">
+          <img 
+            src="https://media.tenor.com/D8zWQW3ZduwAAAAM/math-calculator.gif" 
+            alt="Math Calculator GIF" 
+            class="rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 w-full max-w-[220px] object-cover"
+          >
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+
+    function billSplitter() {
+      return {
+        darkMode: localStorage.getItem('cs_darkMode') === 'true',
+        showRepo: false,
+        editingIndex: null,
+        editItemName: '',
+        editItemPrice: '',
+        editItemAssignees: [],
+        savedRepo: [
+          'Tim Kang', 'Jon', 'Janet', 'Becky', 'Chansoo', 'Yoonmi', 
+          'Jaeyoung', 'John', 'Bianca', 'Eric', 'Susan', 'Choun', 
+          'Suzie', 'David', 'Flopy', 'Tim Kim', 'Yeji', 'Wilson', 
+          'Jessica', 'Kaitlyn', 'Lakisha', 'Aja', 'Jaymie', 'Lizmar'
+        ],
+        people: JSON.parse(localStorage.getItem('cs_people')) || [],
+        newPersonName: '',
+        items: JSON.parse(localStorage.getItem('cs_items')) || [],
+        newItemName: '',
+        newItemPrice: '',
+        newItemAssignees: [],
+        tax: parseFloat(localStorage.getItem('cs_tax')) || 0,
+        tip: parseFloat(localStorage.getItem('cs_tip')) || 0,
+
+        init() {
+          this.$watch('people', val => localStorage.setItem('cs_people', JSON.stringify(val)));
+          this.$watch('items', val => localStorage.setItem('cs_items', JSON.stringify(val)));
+          this.$watch('tax', val => localStorage.setItem('cs_tax', val));
+          this.$watch('tip', val => localStorage.setItem('cs_tip', val));
+          this.$watch('darkMode', val => localStorage.setItem('cs_darkMode', val));
+        },
+
+        toggleDarkMode() {
+          this.darkMode = !this.darkMode;
+          this.refreshIcons();
+        },
+
+        addCustomPerson() {
+          const name = this.newPersonName.trim();
+          if (name && !this.people.includes(name)) {
+            this.people.push(name);
+            this.newPersonName = '';
+            this.refreshIcons();
+          }
+        },
+
+        togglePerson(name) {
+          if (this.people.includes(name)) {
+            this.removePerson(name);
+          } else {
+            this.people.push(name);
+            this.refreshIcons();
+          }
+        },
+
+        removePerson(name) {
+          this.people = this.people.filter(p => p !== name);
+          this.items.forEach(item => {
+            item.assignees = item.assignees.filter(p => p !== name);
+          });
+          this.refreshIcons();
+        },
+
+        addItem() {
+          const price = parseFloat(this.newItemPrice);
+          if (this.newItemName.trim() && !isNaN(price) && price > 0) {
+            this.items.push({
+              name: this.newItemName.trim(),
+              price: price,
+              assignees: this.newItemAssignees.length > 0 ? [...this.newItemAssignees] : [...this.people]
+            });
+            this.newItemName = '';
+            this.newItemPrice = '';
+            this.newItemAssignees = [];
+            this.refreshIcons();
+          }
+        },
+
+        startEditItem(index) {
+          this.editingIndex = index;
+          this.editItemName = this.items[index].name;
+          this.editItemPrice = this.items[index].price;
+          this.editItemAssignees = [...this.items[index].assignees];
+        },
+
+        cancelEditItem() {
+          this.editingIndex = null;
+        },
+
+        saveEditItem(index) {
+          const price = parseFloat(this.editItemPrice);
+          if (this.editItemName.trim() && !isNaN(price) && price > 0) {
+            this.items[index].name = this.editItemName.trim();
+            this.items[index].price = price;
+            this.items[index].assignees = this.editItemAssignees.length > 0 ? [...this.editItemAssignees] : [...this.people];
+            this.editingIndex = null;
+            this.refreshIcons();
+          }
+        },
+
+        removeItem(index) {
+          this.items.splice(index, 1);
+          this.refreshIcons();
+        },
+
+        resetAll() {
+          this.people = [];
+          this.items = [];
+          this.tax = 0;
+          this.tip = 0;
+          localStorage.removeItem('cs_people');
+          localStorage.removeItem('cs_items');
+          localStorage.removeItem('cs_tax');
+          localStorage.removeItem('cs_tip');
+          this.refreshIcons();
+        },
+
+        copyIndividualText(person, summary) {
+          const text = `Hey ${person}! Your check total is $${summary.total.toFixed(2)} (Subtotal: $${summary.subtotal.toFixed(2)}, Tax: $${summary.tax.toFixed(2)}, Tip: $${summary.tip.toFixed(2)})`;
+          navigator.clipboard.writeText(text);
+          alert(`Copied text for ${person} to clipboard! Ready to paste into KakaoTalk or Venmo.`);
+        },
+
+        get subtotal() {
+          return this.items.reduce((sum, item) => sum + Number(item.price || 0), 0);
+        },
+
+        get taxTotal() {
+          return Number(this.tax || 0);
+        },
+
+        get tipTotal() {
+          return Number(this.tip || 0);
+        },
+
+        get grandTotal() {
+          return this.subtotal + this.taxTotal + this.tipTotal;
+        },
+
+        get individualTotals() {
+          const summary = {};
+
+          this.people.forEach(p => {
+            summary[p] = { subtotal: 0, tax: 0, tip: 0, total: 0 };
+          });
+
+          if (this.people.length === 0) return summary;
+
+          this.items.forEach(item => {
+            const assignees = item.assignees.length > 0 ? item.assignees : this.people;
+            const splitPrice = item.price / assignees.length;
+
+            assignees.forEach(p => {
+              if (summary[p]) {
+                summary[p].subtotal += splitPrice;
+              }
+            });
+          });
+
+          const currentSubtotal = this.subtotal;
+
+          this.people.forEach(p => {
+            const ratio = currentSubtotal > 0 ? (summary[p].subtotal / currentSubtotal) : (1 / this.people.length);
+            summary[p].tax = this.taxTotal * ratio;
+            summary[p].tip = this.tipTotal * ratio;
+            summary[p].total = summary[p].subtotal + summary[p].tax + summary[p].tip;
+          });
+
+          return summary;
+        },
+
+        refreshIcons() {
+          this.$nextTick(() => {
+            lucide.createIcons();
+          });
+        }
+      };
+    }
+  </script>
+</body>
+</html>
