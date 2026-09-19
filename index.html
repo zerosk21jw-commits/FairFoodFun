@@ -24,7 +24,7 @@
         <h1 class="text-2xl font-bold tracking-tight">Check Splitter</h1>
       </div>
       <button @click="resetAll()" class="text-xs bg-indigo-500 hover:bg-indigo-700 text-white py-1.5 px-3 rounded-lg transition flex items-center gap-1 font-medium">
-        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset All
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Check
       </button>
     </div>
   </header>
@@ -35,36 +35,65 @@
     <div class="md:col-span-2 space-y-6">
 
       <!-- Step 1: People -->
-      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+        <h2 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
           <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i>
           1. Who's Splitting?
         </h2>
 
-        <form @submit.prevent="addPerson()" class="flex gap-2 mb-4">
-          <input 
-            type="text" 
-            x-model="newPersonName" 
-            placeholder="Enter person's name..." 
-            class="flex-1 px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
-          >
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition flex items-center gap-1">
-            <i data-lucide="plus" class="w-4 h-4"></i> Add
-          </button>
-        </form>
+        <!-- Method A: Custom Name Input -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Option A: Type Custom Name</label>
+          <form @submit.prevent="addCustomPerson()" class="flex gap-2">
+            <input 
+              type="text" 
+              x-model="newPersonName" 
+              placeholder="Enter name..." 
+              class="flex-1 px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+            >
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition flex items-center gap-1">
+              <i data-lucide="plus" class="w-4 h-4"></i> Add
+            </button>
+          </form>
+        </div>
 
-        <div class="flex flex-wrap gap-2">
-          <template x-for="(person, index) in people" :key="index">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium text-sm rounded-full border border-indigo-100">
-              <span x-text="person"></span>
-              <button @click="removePerson(index)" class="text-indigo-400 hover:text-indigo-600 rounded-full p-0.5">
-                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        <!-- Method B: Quick-Select from Saved Repo -->
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="block text-xs font-semibold text-slate-600">Option B: Quick-Select Saved Friends</label>
+            <span class="text-[11px] text-slate-400">Click name to toggle</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-xl">
+            <template x-for="name in savedRepo" :key="name">
+              <button 
+                type="button"
+                @click="togglePerson(name)"
+                class="text-xs px-2.5 py-1 rounded-lg border transition font-medium flex items-center gap-1"
+                :class="people.includes(name) ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+              >
+                <span x-text="name"></span>
+                <i x-show="people.includes(name)" data-lucide="check" class="w-3 h-3"></i>
               </button>
-            </span>
-          </template>
-          <template x-if="people.length === 0">
-            <p class="text-xs text-slate-400 italic">No people added yet. Add at least one person to start.</p>
-          </template>
+            </template>
+          </div>
+        </div>
+
+        <!-- Currently Selected Active People -->
+        <div class="pt-2 border-t border-slate-100">
+          <label class="block text-xs font-semibold text-slate-600 mb-2">Active Diners on this Check:</label>
+          <div class="flex flex-wrap gap-2">
+            <template x-for="(person, index) in people" :key="person">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium text-sm rounded-full border border-indigo-100">
+                <span x-text="person"></span>
+                <button @click="removePerson(person)" class="text-indigo-400 hover:text-indigo-600 rounded-full p-0.5">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+              </span>
+            </template>
+            <template x-if="people.length === 0">
+              <p class="text-xs text-slate-400 italic">No diners selected yet. Type a name or tap options from the list above.</p>
+            </template>
+          </div>
         </div>
       </section>
 
@@ -72,7 +101,7 @@
       <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
           <i data-lucide="shopping-bag" class="w-5 h-5 text-indigo-600"></i>
-          2. Items / Dishes
+          2. Add Items
         </h2>
 
         <form @submit.prevent="addItem()" class="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
@@ -80,7 +109,7 @@
             <input 
               type="text" 
               x-model="newItemName" 
-              placeholder="Item name (e.g. Burger)" 
+              placeholder="Item name (e.g. Pasta)" 
               class="col-span-2 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
             >
             <div class="relative">
@@ -97,9 +126,9 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1.5">Who ate/shared this?</label>
+            <label class="block text-xs font-medium text-slate-600 mb-1.5">Who shared this item? (Default: Everyone)</label>
             <div class="flex flex-wrap gap-2">
-              <template x-for="(person, idx) in people" :key="idx">
+              <template x-for="person in people" :key="person">
                 <label class="inline-flex items-center gap-1.5 px-3 py-1 border rounded-lg text-xs cursor-pointer select-none transition"
                   :class="newItemAssignees.includes(person) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'">
                   <input type="checkbox" :value="person" x-model="newItemAssignees" class="hidden">
@@ -107,7 +136,7 @@
                 </label>
               </template>
               <template x-if="people.length === 0">
-                <p class="text-xs text-slate-400">Please add people first.</p>
+                <p class="text-xs text-slate-400">Please add people first to assign items.</p>
               </template>
             </div>
           </div>
@@ -123,7 +152,7 @@
             <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
               <div>
                 <p class="font-medium text-sm text-slate-800" x-text="item.name"></p>
-                <p class="text-xs text-slate-500">Shared by: <span class="font-medium text-indigo-600" x-text="item.assignees.join(', ') || 'Everyone'"></span></p>
+                <p class="text-xs text-slate-500">Shared by: <span class="font-medium text-indigo-600" x-text="item.assignees.join(', ')"></span></p>
               </div>
               <div class="flex items-center gap-3">
                 <span class="font-semibold text-sm text-slate-900" x-text="'$' + Number(item.price).toFixed(2)"></span>
@@ -165,38 +194,19 @@
 
           <!-- Tip Input -->
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Tip Amount ($ or %)</label>
-            <div class="flex gap-2">
-              <div class="relative flex-1">
-                <span class="absolute left-3 top-2.5 text-slate-400 text-sm" x-text="tipType === 'amount' ? '$' : '%'"></span>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="0" 
-                  x-model.number="tipValue" 
-                  placeholder="0.00" 
-                  class="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                >
-              </div>
-              <button 
-                @click="tipType = tipType === 'amount' ? 'percent' : 'amount'"
-                class="px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-                x-text="tipType === 'amount' ? '$ Mode' : '% Mode'">
-              </button>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Tip Paid ($)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0" 
+                x-model.number="tip" 
+                placeholder="0.00" 
+                class="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              >
             </div>
           </div>
-        </div>
-
-        <!-- Tip Presets -->
-        <div class="flex gap-2 mt-3" x-show="tipType === 'percent'">
-          <template x-for="pct in [15, 18, 20, 25]" :key="pct">
-            <button 
-              @click="tipValue = pct" 
-              class="px-2.5 py-1 text-xs border rounded-lg transition"
-              :class="tipValue === pct ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
-              <span x-text="pct + '%'"></span>
-            </button>
-          </template>
         </div>
       </section>
 
@@ -206,11 +216,9 @@
     <div class="space-y-6">
 
       <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center justify-between">
-          <span class="flex items-center gap-2">
-            <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600"></i>
-            Split Summary
-          </span>
+        <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600"></i>
+          Split Summary
         </h2>
 
         <!-- Check Overview -->
@@ -234,7 +242,7 @@
         </div>
 
         <!-- Individual Breakdown -->
-        <div class="space-y-4">
+        <div class="space-y-3">
           <template x-for="(summary, person) in individualTotals" :key="person">
             <div class="p-3 border border-slate-200 rounded-xl space-y-1 bg-slate-50/50">
               <div class="flex justify-between items-center">
@@ -250,7 +258,7 @@
           </template>
 
           <template x-if="people.length === 0">
-            <p class="text-xs text-slate-400 italic text-center py-4">Add people and items to view total calculations.</p>
+            <p class="text-xs text-slate-400 italic text-center py-4">Add people and items to view calculated totals.</p>
           </template>
         </div>
 
@@ -267,21 +275,29 @@
 
     function billSplitter() {
       return {
-        people: ['Alex', 'Sam', 'Taylor'],
-        newPersonName: '',
-        items: [
-          { name: 'Burger', price: 15.00, assignees: ['Alex'] },
-          { name: 'Pizza', price: 22.00, assignees: ['Sam', 'Taylor'] },
-          { name: 'Fries & Drinks', price: 12.00, assignees: ['Alex', 'Sam', 'Taylor'] }
+        savedRepo: [
+          'Tim Kang', 'Jon', 'Janet', 'Becky', 'Chansoo', 'Yoonmi', 
+          'Jaeyoung', 'John', 'Bianca', 'Eric', 'Susan', 'Choun', 
+          'Suzie', 'David', 'Flopy', 'Tim Kim', 'Yeji', 'Wilson', 
+          'Aaron', 'Jessica', 'Kaitlyn', 'Lakisha', 'Aja', 'Jaymie', 'Lizmar'
         ],
+        people: JSON.parse(localStorage.getItem('cs_people')) || [],
+        newPersonName: '',
+        items: JSON.parse(localStorage.getItem('cs_items')) || [],
         newItemName: '',
         newItemPrice: '',
         newItemAssignees: [],
-        tax: 4.00,
-        tipValue: 18,
-        tipType: 'percent', // 'percent' or 'amount'
+        tax: parseFloat(localStorage.getItem('cs_tax')) || 0,
+        tip: parseFloat(localStorage.getItem('cs_tip')) || 0,
 
-        addPerson() {
+        init() {
+          this.$watch('people', val => localStorage.setItem('cs_people', JSON.stringify(val)));
+          this.$watch('items', val => localStorage.setItem('cs_items', JSON.stringify(val)));
+          this.$watch('tax', val => localStorage.setItem('cs_tax', val));
+          this.$watch('tip', val => localStorage.setItem('cs_tip', val));
+        },
+
+        addCustomPerson() {
           const name = this.newPersonName.trim();
           if (name && !this.people.includes(name)) {
             this.people.push(name);
@@ -290,12 +306,20 @@
           }
         },
 
-        removePerson(index) {
-          const removedName = this.people[index];
-          this.people.splice(index, 1);
-          // Remove assigned person from items
+        togglePerson(name) {
+          if (this.people.includes(name)) {
+            this.removePerson(name);
+          } else {
+            this.people.push(name);
+            this.refreshIcons();
+          }
+        },
+
+        removePerson(name) {
+          this.people = this.people.filter(p => p !== name);
+          // Remove from items as assignee
           this.items.forEach(item => {
-            item.assignees = item.assignees.filter(p => p !== removedName);
+            item.assignees = item.assignees.filter(p => p !== name);
           });
           this.refreshIcons();
         },
@@ -324,7 +348,8 @@
           this.people = [];
           this.items = [];
           this.tax = 0;
-          this.tipValue = 0;
+          this.tip = 0;
+          localStorage.clear();
           this.refreshIcons();
         },
 
@@ -337,10 +362,7 @@
         },
 
         get tipTotal() {
-          if (this.tipType === 'percent') {
-            return (this.subtotal * (Number(this.tipValue || 0) / 100));
-          }
-          return Number(this.tipValue || 0);
+          return Number(this.tip || 0);
         },
 
         get grandTotal() {
