@@ -3,17 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Check Splitter & Bill Calculator</title>
-  <!-- Tailwind CSS -->
+  <title>Thyme to Pay so Lettuce Split</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class'
     }
   </script>
-  <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     [x-cloak] { display: none !important; }
@@ -21,16 +18,17 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen font-sans antialiased pb-12 transition-colors duration-200">
 
-  <!-- Header -->
   <header class="bg-indigo-600 dark:bg-indigo-900 text-white py-6 shadow-md mb-8 transition-colors duration-200">
     <div class="max-w-4xl mx-auto px-4 flex justify-between items-center">
       <div class="flex items-center space-x-3">
         <i data-lucide="receipt" class="w-8 h-8"></i>
-        <h1 class="text-2xl font-bold tracking-tight">Check Splitter</h1>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Thyme to Pay</h1>
+          <p class="text-xs text-indigo-200 font-medium">so Lettuce Split 🥬</p>
+        </div>
       </div>
       
       <div class="flex items-center gap-2">
-        <!-- Dark Mode Toggle Button -->
         <button 
           @click="toggleDarkMode()" 
           class="p-2 bg-indigo-500 hover:bg-indigo-700 dark:bg-indigo-800 dark:hover:bg-indigo-700 text-white rounded-lg transition flex items-center justify-center"
@@ -40,7 +38,6 @@
           <i x-show="darkMode" x-cloak data-lucide="sun" class="w-4 h-4"></i>
         </button>
 
-        <!-- Reset Button -->
         <button @click="resetAll()" class="text-xs bg-indigo-500 hover:bg-indigo-700 dark:bg-indigo-800 dark:hover:bg-indigo-700 text-white py-2 px-3 rounded-lg transition flex items-center gap-1 font-medium">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Check
         </button>
@@ -50,17 +47,14 @@
 
   <main class="max-w-4xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
 
-    <!-- Left Column: Inputs & Setup -->
     <div class="md:col-span-2 space-y-6">
 
-      <!-- Step 1: People -->
       <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-5 transition-colors duration-200">
         <h2 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
           <i data-lucide="users" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
           1. Who's Splitting?
         </h2>
 
-        <!-- Custom Name Input + Quick-Select Toggle Button -->
         <div class="space-y-3">
           <form @submit.prevent="addCustomPerson()" class="flex gap-2">
             <input 
@@ -87,7 +81,6 @@
               <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': showRepo }"></i>
             </button>
 
-            <!-- Collapsible Friends Repo List -->
             <div x-show="showRepo" x-cloak x-transition class="mt-2 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl max-h-48 overflow-y-auto">
               <div class="flex justify-between items-center mb-2">
                 <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Tap a name to add/remove:</span>
@@ -110,7 +103,6 @@
           </div>
         </div>
 
-        <!-- Currently Selected Active People -->
         <div class="pt-2 border-t border-slate-100 dark:border-slate-700">
           <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Active Diners on this Check:</label>
           <div class="flex flex-wrap gap-2">
@@ -129,14 +121,12 @@
         </div>
       </section>
 
-      <!-- Step 2: Items -->
       <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors duration-200 space-y-4">
         <h2 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
           <i data-lucide="shopping-bag" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
           2. Add Items
         </h2>
 
-        <!-- Add Item Form -->
         <form @submit.prevent="addItem()" class="space-y-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
           <div class="grid grid-cols-3 gap-2">
             <input 
@@ -179,431 +169,6 @@
           </button>
         </form>
 
-        <!-- Item List with Inline Editing -->
         <div class="space-y-3">
           <template x-for="(item, index) in items" :key="index">
-            <div class="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm transition">
-              
-              <!-- Normal View -->
-              <div x-show="editingIndex !== index">
-                <div class="flex items-center justify-between mb-1.5">
-                  <div>
-                    <span class="font-semibold text-sm text-slate-900 dark:text-slate-100" x-text="item.name"></span>
-                    <span class="text-xs text-slate-500 dark:text-slate-400 ml-2" x-text="'$' + Number(item.price).toFixed(2)"></span>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <button 
-                      @click="startEditing(index)" 
-                      class="text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 px-2 py-1 rounded-lg transition flex items-center gap-1 font-medium"
-                    >
-                      <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit
-                    </button>
-                    <button 
-                      @click="removeItem(index)" 
-                      class="text-xs text-slate-400 hover:text-red-500 p-1 rounded-lg transition"
-                      title="Delete item"
-                    >
-                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-1">
-                  <span class="text-xs text-slate-400 font-medium">Shared by:</span>
-                  <template x-for="p in item.assignees" :key="p">
-                    <span class="text-[11px] px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded font-medium" x-text="p"></span>
-                  </template>
-                  <template x-if="item.assignees.length === 0">
-                    <span class="text-[11px] text-amber-600 dark:text-amber-400 italic">No one assigned!</span>
-                  </template>
-                </div>
-              </div>
-
-              <!-- Inline Edit Panel View -->
-              <div x-show="editingIndex === index" x-cloak class="space-y-3 bg-slate-50 dark:bg-slate-900/80 p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-800">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
-                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Item details
-                  </span>
-                  <button @click="cancelEditing()" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2">
-                  <div class="col-span-2">
-                    <label class="block text-[11px] font-medium text-slate-500 mb-1">Item Name</label>
-                    <input 
-                      type="text" 
-                      x-model="editName" 
-                      class="w-full px-2.5 py-1.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
-                    >
-                  </div>
-                  <div>
-                    <label class="block text-[11px] font-medium text-slate-500 mb-1">Price ($)</label>
-                    <input 
-                      type="number" 
-                      step="0.01" 
-                      min="0" 
-                      x-model="editPrice" 
-                      class="w-full px-2.5 py-1.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
-                    >
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-[11px] font-medium text-slate-500 mb-1">Assigned Diners:</label>
-                  <div class="flex flex-wrap gap-1.5">
-                    <template x-for="person in people" :key="person">
-                      <button 
-                        type="button" 
-                        @click="togglePersonInEdit(person)"
-                        class="text-xs px-2.5 py-1 rounded-lg border transition font-medium flex items-center gap-1"
-                        :class="editAssignees.includes(person) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'"
-                      >
-                        <span x-text="person"></span>
-                        <i x-show="editAssignees.includes(person)" data-lucide="check" class="w-3 h-3"></i>
-                      </button>
-                    </template>
-                  </div>
-                </div>
-
-                <div class="flex justify-end gap-2 pt-1 border-t border-slate-200 dark:border-slate-800">
-                  <button 
-                    type="button" 
-                    @click="cancelEditing()" 
-                    class="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="button" 
-                    @click="saveEditing(index)" 
-                    class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition shadow-sm flex items-center gap-1"
-                  >
-                    <i data-lucide="check" class="w-3.5 h-3.5"></i> Save Changes
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </template>
-
-          <template x-if="items.length === 0">
-            <p class="text-xs text-slate-400 dark:text-slate-500 italic text-center py-4">No items added to check yet.</p>
-          </template>
-        </div>
-      </section>
-
-      <!-- Step 3: Tax & Tip -->
-      <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors duration-200">
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <i data-lucide="calculator" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
-          3. Tax & Tip
-        </h2>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Tax Input -->
-          <div>
-            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tax Total ($)</label>
-            <div class="relative">
-              <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
-              <input 
-                type="number" 
-                step="0.01" 
-                min="0" 
-                x-model.number="tax" 
-                placeholder="0.00" 
-                class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
-            </div>
-          </div>
-
-          <!-- Tip Input -->
-          <div>
-            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tip Paid ($)</label>
-            <div class="relative">
-              <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
-              <input 
-                type="number" 
-                step="0.01" 
-                min="0" 
-                x-model.number="tip" 
-                placeholder="0.00" 
-                class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
-            </div>
-          </div>
-        </div>
-      </section>
-
-    </div>
-
-    <!-- Right Column: Results Summary -->
-    <div class="space-y-6">
-
-      <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 sticky top-6 transition-colors duration-200">
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
-          Split Summary
-        </h2>
-
-        <!-- Check Overview -->
-        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 mb-6 text-sm">
-          <div class="flex justify-between text-slate-600 dark:text-slate-400">
-            <span>Subtotal:</span>
-            <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + subtotal.toFixed(2)"></span>
-          </div>
-          <div class="flex justify-between text-slate-600 dark:text-slate-400">
-            <span>Tax:</span>
-            <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + taxTotal.toFixed(2)"></span>
-          </div>
-          <div class="flex justify-between text-slate-600 dark:text-slate-400">
-            <span>Tip:</span>
-            <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + tipTotal.toFixed(2)"></span>
-          </div>
-          <div class="border-t border-slate-200 dark:border-slate-700 pt-2 flex justify-between font-bold text-slate-900 dark:text-white text-base">
-            <span>Grand Total:</span>
-            <span x-text="'$' + grandTotal.toFixed(2)"></span>
-          </div>
-        </div>
-
-        <!-- Individual Breakdown -->
-        <div class="space-y-3">
-          <template x-for="(summary, person) in individualTotals" :key="person">
-            <div class="p-3 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2 bg-slate-50/50 dark:bg-slate-900/50">
-              <div class="flex justify-between items-center">
-                <span class="font-semibold text-slate-900 dark:text-slate-100" x-text="person"></span>
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-indigo-600 dark:text-indigo-400 text-base" x-text="'$' + summary.total.toFixed(2)"></span>
-                  <button 
-                    @click="copyIndividualText(person, summary)" 
-                    class="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition"
-                    title="Copy Text Summary"
-                  >
-                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="text-xs text-slate-500 dark:text-slate-400 flex justify-between">
-                <span>Items: $<span x-text="summary.subtotal.toFixed(2)"></span></span>
-                <span>Tax: $<span x-text="summary.tax.toFixed(2)"></span></span>
-                <span>Tip: $<span x-text="summary.tip.toFixed(2)"></span></span>
-              </div>
-            </div>
-          </template>
-
-          <template x-if="people.length === 0">
-            <p class="text-xs text-slate-400 dark:text-slate-500 italic text-center py-4">Add people and items to view calculated totals.</p>
-          </template>
-        </div>
-
-      </section>
-
-    </div>
-
-  </main>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-    });
-
-    function billSplitter() {
-      return {
-        darkMode: localStorage.getItem('cs_darkMode') === 'true',
-        showRepo: false,
-        editingIndex: null,
-        editName: '',
-        editPrice: '',
-        editAssignees: [],
-        savedRepo: [
-          'Tim Kang', 'Jon', 'Janet', 'Becky', 'Chansoo', 'Yoonmi', 
-          'Jaeyoung', 'John', 'Bianca', 'Eric', 'Susan', 'Choun', 
-          'Suzie', 'David', 'Flopy', 'Tim Kim', 'Yeji', 'Wilson', 
-          'Jessica', 'Kaitlyn', 'Lakisha', 'Aja', 'Jaymie', 'Lizmar'
-        ],
-        people: JSON.parse(localStorage.getItem('cs_people')) || [],
-        newPersonName: '',
-        items: JSON.parse(localStorage.getItem('cs_items')) || [],
-        newItemName: '',
-        newItemPrice: '',
-        newItemAssignees: [],
-        tax: parseFloat(localStorage.getItem('cs_tax')) || 0,
-        tip: parseFloat(localStorage.getItem('cs_tip')) || 0,
-
-        init() {
-          this.$watch('people', val => localStorage.setItem('cs_people', JSON.stringify(val)));
-          this.$watch('items', val => localStorage.setItem('cs_items', JSON.stringify(val)));
-          this.$watch('tax', val => localStorage.setItem('cs_tax', val));
-          this.$watch('tip', val => localStorage.setItem('cs_tip', val));
-          this.$watch('darkMode', val => localStorage.setItem('cs_darkMode', val));
-        },
-
-        toggleDarkMode() {
-          this.darkMode = !this.darkMode;
-          this.refreshIcons();
-        },
-
-        addCustomPerson() {
-          const name = this.newPersonName.trim();
-          if (name && !this.people.includes(name)) {
-            this.people.push(name);
-            this.newPersonName = '';
-            this.refreshIcons();
-          }
-        },
-
-        togglePerson(name) {
-          if (this.people.includes(name)) {
-            this.removePerson(name);
-          } else {
-            this.people.push(name);
-            this.refreshIcons();
-          }
-        },
-
-        removePerson(name) {
-          this.people = this.people.filter(p => p !== name);
-          this.items.forEach(item => {
-            item.assignees = item.assignees.filter(p => p !== name);
-          });
-          this.refreshIcons();
-        },
-
-        addItem() {
-          const price = parseFloat(this.newItemPrice);
-          if (this.newItemName.trim() && !isNaN(price) && price > 0) {
-            this.items.push({
-              name: this.newItemName.trim(),
-              price: price,
-              assignees: this.newItemAssignees.length > 0 ? [...this.newItemAssignees] : [...this.people]
-            });
-            this.newItemName = '';
-            this.newItemPrice = '';
-            this.newItemAssignees = [];
-            this.refreshIcons();
-          }
-        },
-
-        // --- INLINE ITEM EDITING FUNCTIONS ---
-        startEditing(index) {
-          const item = this.items[index];
-          this.editingIndex = index;
-          this.editName = item.name;
-          this.editPrice = item.price;
-          this.editAssignees = [...item.assignees];
-          this.refreshIcons();
-        },
-
-        togglePersonInEdit(person) {
-          if (this.editAssignees.includes(person)) {
-            this.editAssignees = this.editAssignees.filter(p => p !== person);
-          } else {
-            this.editAssignees.push(person);
-          }
-        },
-
-        saveEditing(index) {
-          const price = parseFloat(this.editPrice);
-          if (this.editName.trim() && !isNaN(price) && price >= 0) {
-            this.items[index] = {
-              name: this.editName.trim(),
-              price: price,
-              assignees: [...this.editAssignees]
-            };
-            this.editingIndex = null;
-            this.refreshIcons();
-          }
-        },
-
-        cancelEditing() {
-          this.editingIndex = null;
-          this.refreshIcons();
-        },
-
-        removeItem(index) {
-          if (this.editingIndex === index) {
-            this.editingIndex = null;
-          }
-          this.items.splice(index, 1);
-          this.refreshIcons();
-        },
-
-        resetAll() {
-          this.people = [];
-          this.items = [];
-          this.tax = 0;
-          this.tip = 0;
-          this.editingIndex = null;
-          localStorage.removeItem('cs_people');
-          localStorage.removeItem('cs_items');
-          localStorage.removeItem('cs_tax');
-          localStorage.removeItem('cs_tip');
-          this.refreshIcons();
-        },
-
-        copyIndividualText(person, summary) {
-          const text = `Hey ${person}! Your check total is $${summary.total.toFixed(2)} (Subtotal: $${summary.subtotal.toFixed(2)}, Tax: $${summary.tax.toFixed(2)}, Tip: $${summary.tip.toFixed(2)})`;
-          navigator.clipboard.writeText(text);
-          alert(`Copied text for ${person} to clipboard! Ready to paste into KakaoTalk or Venmo.`);
-        },
-
-        get subtotal() {
-          return this.items.reduce((sum, item) => sum + Number(item.price || 0), 0);
-        },
-
-        get taxTotal() {
-          return Number(this.tax || 0);
-        },
-
-        get tipTotal() {
-          return Number(this.tip || 0);
-        },
-
-        get grandTotal() {
-          return this.subtotal + this.taxTotal + this.tipTotal;
-        },
-
-        get individualTotals() {
-          const summary = {};
-
-          this.people.forEach(p => {
-            summary[p] = { subtotal: 0, tax: 0, tip: 0, total: 0 };
-          });
-
-          if (this.people.length === 0) return summary;
-
-          this.items.forEach(item => {
-            const assignees = item.assignees.length > 0 ? item.assignees : this.people;
-            const splitPrice = item.price / assignees.length;
-
-            assignees.forEach(p => {
-              if (summary[p]) {
-                summary[p].subtotal += splitPrice;
-              }
-            });
-          });
-
-          const currentSubtotal = this.subtotal;
-
-          this.people.forEach(p => {
-            const ratio = currentSubtotal > 0 ? (summary[p].subtotal / currentSubtotal) : (1 / this.people.length);
-            summary[p].tax = this.taxTotal * ratio;
-            summary[p].tip = this.tipTotal * ratio;
-            summary[p].total = summary[p].subtotal + summary[p].tax + summary[p].tip;
-          });
-
-          return summary;
-        },
-
-        refreshIcons() {
-          this.$nextTick(() => {
-            lucide.createIcons();
-          });
-        }
-      };
-    }
-  </script>
-</body>
-</html>
+            <div class="bg-white
