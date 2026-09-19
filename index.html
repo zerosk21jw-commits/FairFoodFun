@@ -1,31 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" x-data="billSplitter()" :class="{ 'dark': darkMode }">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Check Splitter & Bill Calculator</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
   <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Tesseract.js for Free On-Device Receipt OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     [x-cloak] { display: none !important; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen font-sans antialiased pb-12" x-data="billSplitter()">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen font-sans antialiased pb-12 transition-colors duration-200">
 
   <!-- Header -->
-  <header class="bg-indigo-600 text-white py-6 shadow-md mb-8">
+  <header class="bg-indigo-600 dark:bg-indigo-900 text-white py-6 shadow-md mb-8 transition-colors duration-200">
     <div class="max-w-4xl mx-auto px-4 flex justify-between items-center">
       <div class="flex items-center space-x-3">
         <i data-lucide="receipt" class="w-8 h-8"></i>
         <h1 class="text-2xl font-bold tracking-tight">Check Splitter</h1>
       </div>
-      <button @click="resetAll()" class="text-xs bg-indigo-500 hover:bg-indigo-700 text-white py-1.5 px-3 rounded-lg transition flex items-center gap-1 font-medium">
-        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Check
-      </button>
+      
+      <div class="flex items-center gap-2">
+        <!-- Dark Mode Toggle Button -->
+        <button 
+          @click="toggleDarkMode()" 
+          class="p-2 bg-indigo-500 hover:bg-indigo-700 dark:bg-indigo-800 dark:hover:bg-indigo-700 text-white rounded-lg transition flex items-center justify-center"
+          :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+        >
+          <i x-show="!darkMode" data-lucide="moon" class="w-4 h-4"></i>
+          <i x-show="darkMode" x-cloak data-lucide="sun" class="w-4 h-4"></i>
+        </button>
+
+        <!-- Reset Button -->
+        <button @click="resetAll()" class="text-xs bg-indigo-500 hover:bg-indigo-700 dark:bg-indigo-800 dark:hover:bg-indigo-700 text-white py-2 px-3 rounded-lg transition flex items-center gap-1 font-medium">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Check
+        </button>
+      </div>
     </div>
   </header>
 
@@ -35,9 +56,9 @@
     <div class="md:col-span-2 space-y-6">
 
       <!-- Step 1: People -->
-      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
-        <h2 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
-          <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i>
+      <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-5 transition-colors duration-200">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <i data-lucide="users" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
           1. Who's Splitting?
         </h2>
 
@@ -48,7 +69,7 @@
               type="text" 
               x-model="newPersonName" 
               placeholder="Enter name..." 
-              class="flex-1 px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+              class="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm placeholder-slate-400 dark:placeholder-slate-400"
             >
             <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition flex items-center gap-1">
               <i data-lucide="plus" class="w-4 h-4"></i> Add
@@ -59,20 +80,20 @@
             <button 
               type="button" 
               @click="showRepo = !showRepo" 
-              class="w-full text-xs font-semibold px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-200 transition flex items-center justify-between"
+              class="w-full text-xs font-semibold px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-600 transition flex items-center justify-between"
             >
               <span class="flex items-center gap-1.5">
-                <i data-lucide="user-check" class="w-4 h-4 text-indigo-600"></i>
+                <i data-lucide="user-check" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
                 Select from Saved Friends List
               </span>
               <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': showRepo }"></i>
             </button>
 
             <!-- Collapsible Friends Repo List -->
-            <div x-show="showRepo" x-cloak x-transition class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl max-h-48 overflow-y-auto">
+            <div x-show="showRepo" x-cloak x-transition class="mt-2 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl max-h-48 overflow-y-auto">
               <div class="flex justify-between items-center mb-2">
-                <span class="text-[11px] font-medium text-slate-500">Tap a name to add/remove:</span>
-                <span class="text-[11px] text-indigo-600 font-semibold" x-text="people.length + ' selected'"></span>
+                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Tap a name to add/remove:</span>
+                <span class="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold" x-text="people.length + ' selected'"></span>
               </div>
               <div class="flex flex-wrap gap-1.5">
                 <template x-for="name in savedRepo" :key="name">
@@ -80,7 +101,7 @@
                     type="button"
                     @click="togglePerson(name)"
                     class="text-xs px-2.5 py-1 rounded-lg border transition font-medium flex items-center gap-1"
-                    :class="people.includes(name) ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+                    :class="people.includes(name) ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'"
                   >
                     <span x-text="name"></span>
                     <i x-show="people.includes(name)" data-lucide="check" class="w-3 h-3"></i>
@@ -92,38 +113,61 @@
         </div>
 
         <!-- Currently Selected Active People -->
-        <div class="pt-2 border-t border-slate-100">
-          <label class="block text-xs font-semibold text-slate-600 mb-2">Active Diners on this Check:</label>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-700">
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Active Diners on this Check:</label>
           <div class="flex flex-wrap gap-2">
             <template x-for="person in people" :key="person">
-              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium text-sm rounded-full border border-indigo-100">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-medium text-sm rounded-full border border-indigo-100 dark:border-indigo-800">
                 <span x-text="person"></span>
-                <button @click="removePerson(person)" class="text-indigo-400 hover:text-indigo-600 rounded-full p-0.5">
+                <button @click="removePerson(person)" class="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200 rounded-full p-0.5">
                   <i data-lucide="x" class="w-3.5 h-3.5"></i>
                 </button>
               </span>
             </template>
             <template x-if="people.length === 0">
-              <p class="text-xs text-slate-400 italic">No diners selected yet. Type a name or tap options from the saved list.</p>
+              <p class="text-xs text-slate-400 dark:text-slate-500 italic">No diners selected yet. Type a name or tap options from the saved list.</p>
             </template>
           </div>
         </div>
       </section>
 
-      <!-- Step 2: Items -->
-      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-          <i data-lucide="shopping-bag" class="w-5 h-5 text-indigo-600"></i>
-          2. Add Items
-        </h2>
+      <!-- Step 2: Items & Scanner -->
+      <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors duration-200 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="shopping-bag" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+            2. Add Items
+          </h2>
 
-        <form @submit.prevent="addItem()" class="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <!-- Camera / Receipt Upload Button -->
+          <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-600 text-xs font-medium transition flex items-center gap-1.5">
+            <i data-lucide="camera" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
+            <span>Scan Receipt</span>
+            <input type="file" accept="image/*" @change="processReceipt($event)" class="hidden">
+          </label>
+        </div>
+
+        <!-- OCR Scanning Progress Bar -->
+        <div x-show="isScanning" x-cloak class="p-3 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900 rounded-xl space-y-2">
+          <div class="flex justify-between text-xs text-indigo-700 dark:text-indigo-300 font-medium">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+              Reading Receipt Photo...
+            </span>
+            <span x-text="scanProgress + '%'"></span>
+          </div>
+          <div class="w-full bg-indigo-200 dark:bg-indigo-900 rounded-full h-1.5 overflow-hidden">
+            <div class="bg-indigo-600 h-1.5 transition-all duration-200" :style="'width: ' + scanProgress + '%'"></div>
+          </div>
+        </div>
+
+        <form @submit.prevent="addItem()" class="space-y-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
           <div class="grid grid-cols-3 gap-2">
             <input 
               type="text" 
               x-model="newItemName" 
               placeholder="Item name (e.g. Pasta)" 
-              class="col-span-2 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              class="col-span-2 px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
             >
             <div class="relative">
               <span class="absolute left-3 top-2 text-slate-400 text-sm">$</span>
@@ -133,28 +177,28 @@
                 min="0" 
                 x-model="newItemPrice" 
                 placeholder="0.00" 
-                class="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
               >
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1.5">Who shared this item? (Default: Everyone)</label>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Who shared this item? (Default: Everyone)</label>
             <div class="flex flex-wrap gap-2">
               <template x-for="person in people" :key="person">
                 <label class="inline-flex items-center gap-1.5 px-3 py-1 border rounded-lg text-xs cursor-pointer select-none transition"
-                  :class="newItemAssignees.includes(person) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'">
+                  :class="newItemAssignees.includes(person) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700'">
                   <input type="checkbox" :value="person" x-model="newItemAssignees" class="hidden">
                   <span x-text="person"></span>
                 </label>
               </template>
               <template x-if="people.length === 0">
-                <p class="text-xs text-slate-400">Please add people first to assign items.</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500">Please add people first to assign items.</p>
               </template>
             </div>
           </div>
 
-          <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-2 rounded-lg transition flex items-center justify-center gap-1">
+          <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white text-sm font-medium py-2 rounded-lg transition flex items-center justify-center gap-1">
             <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Item
           </button>
         </form>
@@ -162,13 +206,13 @@
         <!-- Item List -->
         <div class="space-y-2">
           <template x-for="(item, index) in items" :key="index">
-            <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
+            <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
               <div>
-                <p class="font-medium text-sm text-slate-800" x-text="item.name"></p>
-                <p class="text-xs text-slate-500">Shared by: <span class="font-medium text-indigo-600" x-text="item.assignees.join(', ')"></span></p>
+                <p class="font-medium text-sm text-slate-800 dark:text-slate-200" x-text="item.name"></p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Shared by: <span class="font-medium text-indigo-600 dark:text-indigo-400" x-text="item.assignees.join(', ')"></span></p>
               </div>
               <div class="flex items-center gap-3">
-                <span class="font-semibold text-sm text-slate-900" x-text="'$' + Number(item.price).toFixed(2)"></span>
+                <span class="font-semibold text-sm text-slate-900 dark:text-white" x-text="'$' + Number(item.price).toFixed(2)"></span>
                 <button @click="removeItem(index)" class="text-slate-400 hover:text-red-500 transition">
                   <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
@@ -176,22 +220,22 @@
             </div>
           </template>
           <template x-if="items.length === 0">
-            <p class="text-xs text-slate-400 italic text-center py-4">No items added to check yet.</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500 italic text-center py-4">No items added to check yet.</p>
           </template>
         </div>
       </section>
 
       <!-- Step 3: Tax & Tip -->
-      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-          <i data-lucide="calculator" class="w-5 h-5 text-indigo-600"></i>
+      <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors duration-200">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <i data-lucide="calculator" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
           3. Tax & Tip
         </h2>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Tax Input -->
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Tax Total ($)</label>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tax Total ($)</label>
             <div class="relative">
               <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
               <input 
@@ -200,14 +244,14 @@
                 min="0" 
                 x-model.number="tax" 
                 placeholder="0.00" 
-                class="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
               >
             </div>
           </div>
 
           <!-- Tip Input -->
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Tip Paid ($)</label>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tip Paid ($)</label>
             <div class="relative">
               <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
               <input 
@@ -216,7 +260,7 @@
                 min="0" 
                 x-model.number="tip" 
                 placeholder="0.00" 
-                class="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
               >
             </div>
           </div>
@@ -228,27 +272,27 @@
     <!-- Right Column: Results Summary -->
     <div class="space-y-6">
 
-      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-          <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600"></i>
+      <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 sticky top-6 transition-colors duration-200">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
           Split Summary
         </h2>
 
         <!-- Check Overview -->
-        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 mb-6 text-sm">
-          <div class="flex justify-between text-slate-600">
+        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 mb-6 text-sm">
+          <div class="flex justify-between text-slate-600 dark:text-slate-400">
             <span>Subtotal:</span>
-            <span class="font-medium" x-text="'$' + subtotal.toFixed(2)"></span>
+            <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + subtotal.toFixed(2)"></span>
           </div>
-          <div class="flex justify-between text-slate-600">
+          <div class="flex justify-between text-slate-600 dark:text-slate-400">
             <span>Tax:</span>
-            <span class="font-medium" x-text="'$' + taxTotal.toFixed(2)"></span>
+            <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + taxTotal.toFixed(2)"></span>
           </div>
-          <div class="flex justify-between text-slate-600">
+          <div class="flex justify-between text-slate-600 dark:text-slate-400">
             <span>Tip:</span>
-            <span class="font-medium" x-text="'$' + tipTotal.toFixed(2)"></span>
+            <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + tipTotal.toFixed(2)"></span>
           </div>
-          <div class="border-t border-slate-200 pt-2 flex justify-between font-bold text-slate-900 text-base">
+          <div class="border-t border-slate-200 dark:border-slate-700 pt-2 flex justify-between font-bold text-slate-900 dark:text-white text-base">
             <span>Grand Total:</span>
             <span x-text="'$' + grandTotal.toFixed(2)"></span>
           </div>
@@ -257,21 +301,21 @@
         <!-- Individual Breakdown -->
         <div class="space-y-3">
           <template x-for="(summary, person) in individualTotals" :key="person">
-            <div class="p-3 border border-slate-200 rounded-xl space-y-2 bg-slate-50/50">
+            <div class="p-3 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2 bg-slate-50/50 dark:bg-slate-900/50">
               <div class="flex justify-between items-center">
-                <span class="font-semibold text-slate-900" x-text="person"></span>
+                <span class="font-semibold text-slate-900 dark:text-slate-100" x-text="person"></span>
                 <div class="flex items-center gap-2">
-                  <span class="font-bold text-indigo-600 text-base" x-text="'$' + summary.total.toFixed(2)"></span>
+                  <span class="font-bold text-indigo-600 dark:text-indigo-400 text-base" x-text="'$' + summary.total.toFixed(2)"></span>
                   <button 
                     @click="copyIndividualText(person, summary)" 
-                    class="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded transition"
-                    title="Copy Kakao / Venmo Text"
+                    class="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition"
+                    title="Copy Text Summary"
                   >
                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                   </button>
                 </div>
               </div>
-              <div class="text-xs text-slate-500 flex justify-between">
+              <div class="text-xs text-slate-500 dark:text-slate-400 flex justify-between">
                 <span>Items: $<span x-text="summary.subtotal.toFixed(2)"></span></span>
                 <span>Tax: $<span x-text="summary.tax.toFixed(2)"></span></span>
                 <span>Tip: $<span x-text="summary.tip.toFixed(2)"></span></span>
@@ -280,7 +324,7 @@
           </template>
 
           <template x-if="people.length === 0">
-            <p class="text-xs text-slate-400 italic text-center py-4">Add people and items to view calculated totals.</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500 italic text-center py-4">Add people and items to view calculated totals.</p>
           </template>
         </div>
 
@@ -297,11 +341,14 @@
 
     function billSplitter() {
       return {
+        darkMode: localStorage.getItem('cs_darkMode') === 'true',
         showRepo: false,
+        isScanning: false,
+        scanProgress: 0,
         savedRepo: [
-          'Tim1', 'Jon', 'Janet', 'Becky', 'Chans', 'Yoonmi', 
-          'JY', 'John', 'Bianca', 'Eric', 'Susan', 'Choun', 
-          'Suzie', 'David', 'Flopy', 'Tim2', 'Yeji', 'Wilson', 
+          'Tim Kang', 'Jon', 'Janet', 'Becky', 'Chansoo', 'Yoonmi', 
+          'Jaeyoung', 'John', 'Bianca', 'Eric', 'Susan', 'Choun', 
+          'Suzie', 'David', 'Flopy', 'Tim Kim', 'Yeji', 'Wilson', 
           'Jessica', 'Kaitlyn', 'Lakisha', 'Aja', 'Jaymie', 'Lizmar'
         ],
         people: JSON.parse(localStorage.getItem('cs_people')) || [],
@@ -318,6 +365,82 @@
           this.$watch('items', val => localStorage.setItem('cs_items', JSON.stringify(val)));
           this.$watch('tax', val => localStorage.setItem('cs_tax', val));
           this.$watch('tip', val => localStorage.setItem('cs_tip', val));
+          this.$watch('darkMode', val => localStorage.setItem('cs_darkMode', val));
+        },
+
+        toggleDarkMode() {
+          this.darkMode = !this.darkMode;
+          this.refreshIcons();
+        },
+
+        async processReceipt(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+
+          this.isScanning = true;
+          this.scanProgress = 0;
+
+          try {
+            const worker = await Tesseract.createWorker('eng', 1, {
+              logger: m => {
+                if (m.status === 'recognizing text') {
+                  this.scanProgress = Math.round(m.progress * 100);
+                }
+              }
+            });
+
+            const ret = await worker.recognize(file);
+            await worker.terminate();
+
+            this.parseReceiptText(ret.data.text);
+          } catch (error) {
+            console.error('OCR error:', error);
+            alert('Could not scan receipt image. Please try again with a clearer photo.');
+          } finally {
+            this.isScanning = false;
+            event.target.value = '';
+          }
+        },
+
+        parseReceiptText(text) {
+          const lines = text.split('\n');
+          let addedCount = 0;
+
+          lines.forEach(line => {
+            const cleanLine = line.trim();
+            if (!cleanLine) return;
+
+            // Match prices at end of lines like "$12.50" or "12.50"
+            const match = cleanLine.match(/^(.*?)\s+\$?(\d+\.\d{2})$/);
+            
+            if (match) {
+              const name = match[1].replace(/[^a-zA-Z0-9\s]/g, '').trim();
+              const price = parseFloat(match[2]);
+
+              if (name && price > 0) {
+                const lowerName = name.toLowerCase();
+                
+                // Identify Tax lines automatically
+                if (lowerName.includes('tax')) {
+                  this.tax = price;
+                } else if (!lowerName.includes('total') && !lowerName.includes('subtotal') && !lowerName.includes('amount')) {
+                  this.items.push({
+                    name: name,
+                    price: price,
+                    assignees: [...this.people]
+                  });
+                  addedCount++;
+                }
+              }
+            }
+          });
+
+          this.refreshIcons();
+          if (addedCount > 0) {
+            alert(`Successfully scanned ${addedCount} item(s) from receipt!`);
+          } else {
+            alert('Scanned image, but no line items were detected. Please enter items manually.');
+          }
         },
 
         addCustomPerson() {
@@ -371,7 +494,10 @@
           this.items = [];
           this.tax = 0;
           this.tip = 0;
-          localStorage.clear();
+          localStorage.removeItem('cs_people');
+          localStorage.removeItem('cs_items');
+          localStorage.removeItem('cs_tax');
+          localStorage.removeItem('cs_tip');
           this.refreshIcons();
         },
 
