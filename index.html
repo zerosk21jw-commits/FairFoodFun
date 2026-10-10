@@ -561,13 +561,14 @@
 
           <div>
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Split Between How Many People?</label>
-            <input 
-              type="number" 
-              min="1" 
-              step="1" 
+            <select 
               x-model.number="quickPeople" 
-              class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
             >
+              <template x-for="n in 20" :key="n">
+                <option :value="n" x-text="n + (n === 1 ? ' Person' : ' People')"></option>
+              </template>
+            </select>
           </div>
         </div>
 
@@ -618,13 +619,14 @@
 
           <div>
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Split Between How Many People?</label>
-            <input 
-              type="number" 
-              min="1" 
-              step="1" 
+            <select 
               x-model.number="quickSplitPeople" 
-              class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
             >
+              <template x-for="n in 20" :key="n">
+                <option :value="n" x-text="n + (n === 1 ? ' Person' : ' People')"></option>
+              </template>
+            </select>
           </div>
         </div>
 
@@ -658,7 +660,7 @@
         editItemName: '',
         editItemPrice: '',
         editItemAssignees: [],
-        savedRepo: JSON.parse(localStorage.getItem('cs_savedRepo')) || ['Alice', 'Bob', 'Charlie', 'David', 'Eva'],
+        savedRepo: JSON.parse(localStorage.getItem('cs_savedRepo')) || ['Tim'],
         people: JSON.parse(localStorage.getItem('cs_people')) || [],
         payerMap: JSON.parse(localStorage.getItem('cs_payerMap')) || {},
         newPersonName: '',
