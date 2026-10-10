@@ -6,11 +6,8 @@
   <title>Thyme to Pay so Lettuce Split</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      darkMode: 'class'
-    }
+    tailwind.config = { darkMode: 'class' }
   </script>
-  <!-- Pinned CDN script versions for stability -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.10/dist/cdn.min.js"></script>
   <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
   <style>
@@ -415,7 +412,8 @@
               Split Summary
             </h2>
             <button 
-              @click="copyGroupSummaryText()" 
+              id="btnCopyGroup"
+              type="button"
               class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition flex items-center gap-1"
               :class="copiedGroup ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-700 dark:hover:bg-slate-600 text-indigo-600 dark:text-indigo-300 border-indigo-200 dark:border-slate-600'"
               title="Copy formatted summary for group chat"
@@ -649,34 +647,19 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
+
+      // Native Event Listener specifically for Brave browser strict gesture requirements
+      const btnGroup = document.getElementById('btnCopyGroup');
+      if (btnGroup) {
+        btnGroup.addEventListener('click', (e) => {
+          e.preventDefault();
+          const app = Alpine.$data(btnGroup);
+          if (app) {
+            app.handleNativeGroupCopy();
+          }
+        });
+      }
     });
-
-    // Dual-layer fallback clipboard engine
-    function copyToClipboard(text) {
-      if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text).catch(() => fallbackCopyTextToClipboard(text));
-      } else {
-        return Promise.resolve(fallbackCopyTextToClipboard(text));
-      }
-    }
-
-    function fallbackCopyTextToClipboard(text) {
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      textArea.style.position = 'fixed';
-      textArea.style.top = '0';
-      textArea.style.left = '0';
-      textArea.style.opacity = '0';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand('copy');
-      } catch (err) {
-        console.error('Fallback copy failed', err);
-      }
-      document.body.removeChild(textArea);
-    }
 
     function billSplitter() {
       return {
@@ -871,22 +854,7 @@
           this.refreshIcons();
         },
 
-        copyIndividualText(person, summary) {
-          const coveredMsg = summary.covering && summary.covering.length > 0 
-            ? ` (including covered amount for ${summary.covering.join(', ')})` 
-            : '';
-          const text = `Hey ${person}! Your check total is $${summary.total.toFixed(2)}${coveredMsg} (Subtotal: $${summary.subtotal.toFixed(2)}, Discount: -$${summary.discount.toFixed(2)}, Tax: $${summary.tax.toFixed(2)}, Tip: $${summary.tip.toFixed(2)}, Svc Charge: $${summary.serviceCharge.toFixed(2)}, Other Fees: $${summary.otherFees.toFixed(2)})`;
-          
-          copyToClipboard(text);
-          this.copiedPerson = person;
-          this.refreshIcons();
-          setTimeout(() => {
-            this.copiedPerson = null;
-            this.refreshIcons();
-          }, 2000);
-        },
-
-        copyGroupSummaryText() {
+        handleNativeGroupCopy() {
           const totals = this.consolidatedTotals;
           const payers = Object.keys(totals);
 
@@ -910,13 +878,44 @@
           if (this.otherFeesTotal > 0) text += ` | Other Fees: $${this.otherFeesTotal.toFixed(2)}`;
           text += `\nGrand Total: $${this.grandTotal.toFixed(2)}`;
 
-          copyToClipboard(text);
+          this.braveCompatibleCopy(text);
           this.copiedGroup = true;
           this.refreshIcons();
           setTimeout(() => {
             this.copiedGroup = false;
             this.refreshIcons();
           }, 2000);
+        },
+
+        copyIndividualText(person, summary) {
+          const coveredMsg = summary.covering && summary.covering.length > 0 
+            ? ` (including covered amount for ${summary.covering.join(', ')})` 
+            : '';
+          const text = `Hey ${person}! Your check total is $${summary.total.toFixed(2)}${coveredMsg} (Subtotal: $${summary.subtotal.toFixed(2)}, Discount: -$${summary.discount.toFixed(2)}, Tax: $${summary.tax.toFixed(2)}, Tip: $${summary.tip.toFixed(2)}, Svc Charge: $${summary.serviceCharge.toFixed(2)}, Other Fees: $${summary.otherFees.toFixed(2)})`;
+          
+          this.braveCompatibleCopy(text);
+          this.copiedPerson = person;
+          this.refreshIcons();
+          setTimeout(() => {
+            this.copiedPerson = null;
+            this.refreshIcons();
+          }, 2000);
+        },
+
+        braveCompatibleCopy(text) {
+          const el = document.createElement('textarea');
+          el.value = text;
+          document.body.appendChild(el);
+          el.focus();
+          el.select();
+          try {
+            document.execCommand('copy');
+          } catch (e) {
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(text);
+            }
+          }
+          document.body.removeChild(el);
         },
 
         get subtotal() {
