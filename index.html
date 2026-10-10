@@ -416,10 +416,12 @@
             </h2>
             <button 
               @click="copyGroupSummaryText()" 
-              class="text-xs bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-700 dark:hover:bg-slate-600 text-indigo-600 dark:text-indigo-300 font-semibold px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-slate-600 transition flex items-center gap-1"
+              class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition flex items-center gap-1"
+              :class="copiedGroup ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-700 dark:hover:bg-slate-600 text-indigo-600 dark:text-indigo-300 border-indigo-200 dark:border-slate-600'"
               title="Copy formatted summary for group chat"
             >
-              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Group Summary
+              <i :data-lucide="copiedGroup ? 'check' : 'copy'" class="w-3.5 h-3.5"></i>
+              <span x-text="copiedGroup ? 'Copied!' : 'Copy Group Summary'"></span>
             </button>
           </div>
 
@@ -470,10 +472,10 @@
                     <span class="font-bold text-indigo-600 dark:text-indigo-400 text-base" x-text="'$' + summary.total.toFixed(2)"></span>
                     <button 
                       @click="copyIndividualText(person, summary)" 
-                      class="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition"
+                      class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition flex items-center gap-1"
                       title="Copy Individual Text"
                     >
-                      <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                      <i :data-lucide="copiedPerson === person ? 'check' : 'copy'" class="w-3.5 h-3.5" :class="{ 'text-emerald-500': copiedPerson === person }"></i>
                     </button>
                   </div>
                 </div>
@@ -649,6 +651,33 @@
       lucide.createIcons();
     });
 
+    // Dual-layer fallback clipboard engine
+    function copyToClipboard(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text).catch(() => fallbackCopyTextToClipboard(text));
+      } else {
+        return Promise.resolve(fallbackCopyTextToClipboard(text));
+      }
+    }
+
+    function fallbackCopyTextToClipboard(text) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.top = '0';
+      textArea.style.left = '0';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      document.body.removeChild(textArea);
+    }
+
     function billSplitter() {
       return {
         activeTab: 'itemized',
@@ -660,6 +689,8 @@
         editItemName: '',
         editItemPrice: '',
         editItemAssignees: [],
+        copiedGroup: false,
+        copiedPerson: null,
         savedRepo: JSON.parse(localStorage.getItem('cs_savedRepo')) || ['Tim'],
         people: JSON.parse(localStorage.getItem('cs_people')) || [],
         payerMap: JSON.parse(localStorage.getItem('cs_payerMap')) || {},
@@ -845,8 +876,14 @@
             ? ` (including covered amount for ${summary.covering.join(', ')})` 
             : '';
           const text = `Hey ${person}! Your check total is $${summary.total.toFixed(2)}${coveredMsg} (Subtotal: $${summary.subtotal.toFixed(2)}, Discount: -$${summary.discount.toFixed(2)}, Tax: $${summary.tax.toFixed(2)}, Tip: $${summary.tip.toFixed(2)}, Svc Charge: $${summary.serviceCharge.toFixed(2)}, Other Fees: $${summary.otherFees.toFixed(2)})`;
-          navigator.clipboard.writeText(text);
-          alert(`Copied text for ${person} to clipboard! Ready to paste into KakaoTalk or Venmo.`);
+          
+          copyToClipboard(text);
+          this.copiedPerson = person;
+          this.refreshIcons();
+          setTimeout(() => {
+            this.copiedPerson = null;
+            this.refreshIcons();
+          }, 2000);
         },
 
         copyGroupSummaryText() {
@@ -873,8 +910,13 @@
           if (this.otherFeesTotal > 0) text += ` | Other Fees: $${this.otherFeesTotal.toFixed(2)}`;
           text += `\nGrand Total: $${this.grandTotal.toFixed(2)}`;
 
-          navigator.clipboard.writeText(text);
-          alert('Copied group summary to clipboard! Ready to paste into group chat.');
+          copyToClipboard(text);
+          this.copiedGroup = true;
+          this.refreshIcons();
+          setTimeout(() => {
+            this.copiedGroup = false;
+            this.refreshIcons();
+          }, 2000);
         },
 
         get subtotal() {
