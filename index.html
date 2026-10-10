@@ -323,10 +323,25 @@
         <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors duration-200">
           <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <i data-lucide="calculator" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
-            3. Tax, Tip & Fees
+            3. Discounts, Tax, Tip & Fees
           </h2>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">Discount / Coupon ($)</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  min="0" 
+                  x-model.number="discount" 
+                  placeholder="0.00" 
+                  class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                >
+              </div>
+            </div>
+
             <div>
               <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tax Total ($)</label>
               <div class="relative">
@@ -413,6 +428,12 @@
               <span>Subtotal:</span>
               <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + subtotal.toFixed(2)"></span>
             </div>
+            <template x-if="discountTotal > 0">
+              <div class="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+                <span>Discount:</span>
+                <span x-text="'-$' + discountTotal.toFixed(2)"></span>
+              </div>
+            </template>
             <div class="flex justify-between text-slate-600 dark:text-slate-400">
               <span>Tax:</span>
               <span class="font-medium text-slate-800 dark:text-slate-200" x-text="'$' + taxTotal.toFixed(2)"></span>
@@ -458,6 +479,9 @@
                 </div>
                 <div class="text-xs text-slate-500 dark:text-slate-400 grid grid-cols-2 gap-x-2 gap-y-1">
                   <span>Items: $<span x-text="summary.subtotal.toFixed(2)"></span></span>
+                  <template x-if="summary.discount > 0">
+                    <span class="text-emerald-600 dark:text-emerald-400">Discount: -$<span x-text="summary.discount.toFixed(2)"></span></span>
+                  </template>
                   <span>Tax: $<span x-text="summary.tax.toFixed(2)"></span></span>
                   <span>Tip: $<span x-text="summary.tip.toFixed(2)"></span></span>
                   <span>Svc Fee: $<span x-text="summary.serviceCharge.toFixed(2)"></span></span>
@@ -642,6 +666,7 @@
         newItemName: '',
         newItemPrice: '',
         newItemAssignees: [],
+        discount: parseFloat(localStorage.getItem('cs_discount')) || 0,
         tax: parseFloat(localStorage.getItem('cs_tax')) || 0,
         tip: parseFloat(localStorage.getItem('cs_tip')) || 0,
         serviceCharge: parseFloat(localStorage.getItem('cs_serviceCharge')) || 0,
@@ -667,6 +692,7 @@
           this.$watch('payerMap', val => localStorage.setItem('cs_payerMap', JSON.stringify(val)));
           this.$watch('savedRepo', val => localStorage.setItem('cs_savedRepo', JSON.stringify(val)));
           this.$watch('items', val => localStorage.setItem('cs_items', JSON.stringify(val)));
+          this.$watch('discount', val => localStorage.setItem('cs_discount', val));
           this.$watch('tax', val => localStorage.setItem('cs_tax', val));
           this.$watch('tip', val => localStorage.setItem('cs_tip', val));
           this.$watch('serviceCharge', val => localStorage.setItem('cs_serviceCharge', val));
@@ -727,7 +753,6 @@
             }
           });
           
-          // Re-assign items if removing this diner leaves an item unassigned
           this.items.forEach(item => {
             item.assignees = item.assignees.filter(p => p !== name);
             if (item.assignees.length === 0 && this.people.length > 0) {
@@ -787,6 +812,7 @@
           this.people = [];
           this.payerMap = {};
           this.items = [];
+          this.discount = 0;
           this.tax = 0;
           this.tip = 0;
           this.serviceCharge = 0;
@@ -799,6 +825,7 @@
           localStorage.removeItem('cs_people');
           localStorage.removeItem('cs_payerMap');
           localStorage.removeItem('cs_items');
+          localStorage.removeItem('cs_discount');
           localStorage.removeItem('cs_tax');
           localStorage.removeItem('cs_tip');
           localStorage.removeItem('cs_serviceCharge');
@@ -815,7 +842,7 @@
           const coveredMsg = summary.covering && summary.covering.length > 0 
             ? ` (including covered amount for ${summary.covering.join(', ')})` 
             : '';
-          const text = `Hey ${person}! Your check total is $${summary.total.toFixed(2)}${coveredMsg} (Subtotal: $${summary.subtotal.toFixed(2)}, Tax: $${summary.tax.toFixed(2)}, Tip: $${summary.tip.toFixed(2)}, Svc Charge: $${summary.serviceCharge.toFixed(2)}, Other Fees: $${summary.otherFees.toFixed(2)})`;
+          const text = `Hey ${person}! Your check total is $${summary.total.toFixed(2)}${coveredMsg} (Subtotal: $${summary.subtotal.toFixed(2)}, Discount: -$${summary.discount.toFixed(2)}, Tax: $${summary.tax.toFixed(2)}, Tip: $${summary.tip.toFixed(2)}, Svc Charge: $${summary.serviceCharge.toFixed(2)}, Other Fees: $${summary.otherFees.toFixed(2)})`;
           navigator.clipboard.writeText(text);
           alert(`Copied text for ${person} to clipboard! Ready to paste into KakaoTalk or Venmo.`);
         },
@@ -837,6 +864,7 @@
           });
 
           text += `\nSubtotal: $${this.subtotal.toFixed(2)}`;
+          if (this.discountTotal > 0) text += ` | Discount: -$${this.discountTotal.toFixed(2)}`;
           text += ` | Tax: $${this.taxTotal.toFixed(2)}`;
           text += ` | Tip: $${this.tipTotal.toFixed(2)}`;
           if (this.serviceChargeTotal > 0) text += ` | Svc Charge: $${this.serviceChargeTotal.toFixed(2)}`;
@@ -849,6 +877,14 @@
 
         get subtotal() {
           return this.items.reduce((sum, item) => sum + Number(item.price || 0), 0);
+        },
+
+        get discountTotal() {
+          return Number(this.discount || 0);
+        },
+
+        get netSubtotal() {
+          return Math.max(0, this.subtotal - this.discountTotal);
         },
 
         get taxTotal() {
@@ -868,14 +904,14 @@
         },
 
         get grandTotal() {
-          return this.subtotal + this.taxTotal + this.tipTotal + this.serviceChargeTotal + this.otherFeesTotal;
+          return this.netSubtotal + this.taxTotal + this.tipTotal + this.serviceChargeTotal + this.otherFeesTotal;
         },
 
         get rawIndividualTotals() {
           const summary = {};
 
           this.people.forEach(p => {
-            summary[p] = { subtotal: 0, tax: 0, tip: 0, serviceCharge: 0, otherFees: 0, total: 0 };
+            summary[p] = { subtotal: 0, discount: 0, netSubtotal: 0, tax: 0, tip: 0, serviceCharge: 0, otherFees: 0, total: 0 };
           });
 
           if (this.people.length === 0) return summary;
@@ -895,11 +931,15 @@
 
           this.people.forEach(p => {
             const ratio = currentSubtotal > 0 ? (summary[p].subtotal / currentSubtotal) : (1 / this.people.length);
+            
+            summary[p].discount = this.discountTotal * ratio;
+            summary[p].netSubtotal = Math.max(0, summary[p].subtotal - summary[p].discount);
             summary[p].tax = this.taxTotal * ratio;
             summary[p].tip = this.tipTotal * ratio;
             summary[p].serviceCharge = this.serviceChargeTotal * ratio;
             summary[p].otherFees = this.otherFeesTotal * ratio;
-            summary[p].total = summary[p].subtotal + summary[p].tax + summary[p].tip + summary[p].serviceCharge + summary[p].otherFees;
+            
+            summary[p].total = summary[p].netSubtotal + summary[p].tax + summary[p].tip + summary[p].serviceCharge + summary[p].otherFees;
           });
 
           return summary;
@@ -915,6 +955,8 @@
             if (!consolidated[payer]) {
               consolidated[payer] = {
                 subtotal: 0,
+                discount: 0,
+                netSubtotal: 0,
                 tax: 0,
                 tip: 0,
                 serviceCharge: 0,
@@ -930,6 +972,8 @@
 
             if (raw[p]) {
               consolidated[payer].subtotal += raw[p].subtotal;
+              consolidated[payer].discount += raw[p].discount;
+              consolidated[payer].netSubtotal += raw[p].netSubtotal;
               consolidated[payer].tax += raw[p].tax;
               consolidated[payer].tip += raw[p].tip;
               consolidated[payer].serviceCharge += raw[p].serviceCharge;
