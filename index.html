@@ -76,6 +76,7 @@
 
       <div class="md:col-span-2 space-y-6">
 
+        <!-- SECTION 1: WHO'S SPLITTING -->
         <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-5 transition-colors duration-200">
           <h2 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <i data-lucide="users" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
@@ -119,7 +120,6 @@
                   ></button>
                 </div>
 
-                <!-- Add to Saved Friends List -->
                 <div x-show="managingRepo" x-cloak class="flex gap-2">
                   <input 
                     type="text" 
@@ -140,8 +140,8 @@
                   <template x-for="name in savedRepo" :key="name">
                     <div class="inline-flex items-center">
                       <button 
-                        type="button"
-                        @click="togglePerson(name)"
+                        type="button" 
+                        @click="togglePerson(name)" 
                         class="text-xs px-2.5 py-1 rounded-lg border transition font-medium flex items-center gap-1"
                         :class="people.includes(name) ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'"
                       >
@@ -184,7 +184,7 @@
                     <span class="text-slate-400 dark:text-slate-500">Payer:</span>
                     <select 
                       x-model="payerMap[person]" 
-                      @change="setPayer(person, $event.target.value)"
+                      @change="setPayer(person, $event.target.value)" 
                       class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-lg px-1.5 py-1 text-[11px] focus:ring-1 focus:ring-indigo-500 outline-none"
                     >
                       <option :value="person" x-text="'Self (' + person + ')'"></option>
@@ -203,6 +203,7 @@
           </div>
         </section>
 
+        <!-- SECTION 2: ADD ITEMS (UPDATED WITH QUANTITY / SHARE STEPPERS) -->
         <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors duration-200 space-y-4">
           <h2 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <i data-lucide="shopping-bag" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
@@ -214,7 +215,7 @@
               <input 
                 type="text" 
                 x-model="newItemName" 
-                placeholder="Item name (e.g. Pasta)" 
+                placeholder="Item (e.g. 4x Margaritas or Nachos)" 
                 class="col-span-2 px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
               >
               <div class="relative">
@@ -224,21 +225,56 @@
                   step="0.01" 
                   min="0" 
                   x-model="newItemPrice" 
-                  placeholder="0.00" 
+                  placeholder="Line Total" 
                   class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
               </div>
             </div>
 
             <div>
-              <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Who shared this item? (Default: Everyone)</label>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400">
+                  Shares / Qty per person <span class="text-slate-400 font-normal">(Leave all 0 to split evenly)</span>
+                </label>
+                <button 
+                  type="button" 
+                  x-show="totalShares(newItemShares) > 0"
+                  @click="newItemShares = {}"
+                  class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                >
+                  Clear counts
+                </button>
+              </div>
+
               <div class="flex flex-wrap gap-2">
                 <template x-for="person in people" :key="person">
-                  <label class="inline-flex items-center gap-1.5 px-3 py-1 border rounded-lg text-xs cursor-pointer select-none transition"
-                    :class="newItemAssignees.includes(person) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700'">
-                    <input type="checkbox" :value="person" x-model="newItemAssignees" class="hidden">
-                    <span x-text="person"></span>
-                  </label>
+                  <div 
+                    class="inline-flex items-center border rounded-lg text-xs select-none transition overflow-hidden"
+                    :class="(newItemShares[person] || 0) > 0 ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600'"
+                  >
+                    <button 
+                      type="button" 
+                      @click="toggleShare(newItemShares, person)"
+                      class="px-2.5 py-1.5 font-medium hover:opacity-80 transition"
+                      x-text="person"
+                    ></button>
+                    
+                    <div class="flex items-center border-l" :class="(newItemShares[person] || 0) > 0 ? 'border-indigo-500 bg-indigo-700/50' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50'">
+                      <button 
+                        type="button" 
+                        @click="adjustShare(newItemShares, person, -1)"
+                        class="px-1.5 py-1.5 hover:bg-black/10 transition font-bold"
+                        title="Decrease count"
+                      >-</button>
+                      <span class="px-1.5 font-semibold min-w-[1.25rem] text-center" x-text="newItemShares[person] || 0"></span>
+                      <button 
+                        type="button" 
+                        @click="adjustShare(newItemShares, person, 1)"
+                        class="px-1.5 py-1.5 hover:bg-black/10 transition font-bold"
+                        title="Increase count"
+                      >+</button>
+                    </div>
+                  </div>
                 </template>
                 <template x-if="people.length === 0">
                   <p class="text-xs text-slate-400 dark:text-slate-500">Please add people first to assign items.</p>
@@ -251,16 +287,19 @@
             </button>
           </form>
 
+          <!-- ITEM LIST -->
           <div class="space-y-3">
             <template x-for="(item, index) in items" :key="index">
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 transition">
                 
-                <div x-show="editingIndex !== index" class="flex items-center justify-between">
-                  <div>
-                    <p class="font-medium text-sm text-slate-800 dark:text-slate-200" x-text="item.name"></p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Shared by: <span class="font-medium text-indigo-600 dark:text-indigo-400" x-text="item.assignees.join(', ')"></span></p>
+                <div x-show="editingIndex !== index" class="flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="font-medium text-sm text-slate-800 dark:text-slate-200 truncate" x-text="item.name"></p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                      Split: <span class="font-medium text-indigo-600 dark:text-indigo-400" x-text="formatItemSplit(item)"></span>
+                    </p>
                   </div>
-                  <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-3 shrink-0">
                     <span class="font-semibold text-sm text-slate-900 dark:text-white" x-text="'$' + Number(item.price).toFixed(2)"></span>
                     <button @click="startEditItem(index)" class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition" title="Edit Item">
                       <i data-lucide="pencil" class="w-4 h-4"></i>
@@ -271,6 +310,7 @@
                   </div>
                 </div>
 
+                <!-- EDIT ITEM FORM -->
                 <div x-show="editingIndex === index" x-cloak class="space-y-3 bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800">
                   <div class="grid grid-cols-3 gap-2">
                     <input 
@@ -291,14 +331,34 @@
                   </div>
 
                   <div>
-                    <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">Edit Assignees:</label>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="block text-[11px] font-medium text-slate-500 dark:text-slate-400">Edit Shares / Qty:</label>
+                      <button 
+                        type="button" 
+                        @click="editItemShares = {}"
+                        class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline"
+                      >
+                        Reset to Even Split
+                      </button>
+                    </div>
                     <div class="flex flex-wrap gap-1.5">
                       <template x-for="person in people" :key="person">
-                        <label class="inline-flex items-center gap-1 px-2.5 py-1 border rounded-md text-xs cursor-pointer select-none transition"
-                          :class="editItemAssignees.includes(person) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600'">
-                          <input type="checkbox" :value="person" x-model="editItemAssignees" class="hidden">
-                          <span x-text="person"></span>
-                        </label>
+                        <div 
+                          class="inline-flex items-center border rounded-md text-xs select-none transition overflow-hidden"
+                          :class="(editItemShares[person] || 0) > 0 ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600'"
+                        >
+                          <button 
+                            type="button" 
+                            @click="toggleShare(editItemShares, person)"
+                            class="px-2 py-1 font-medium"
+                            x-text="person"
+                          ></button>
+                          <div class="flex items-center border-l" :class="(editItemShares[person] || 0) > 0 ? 'border-indigo-500 bg-indigo-700/50' : 'border-slate-200 dark:border-slate-700'">
+                            <button type="button" @click="adjustShare(editItemShares, person, -1)" class="px-1.5 py-1 font-bold">-</button>
+                            <span class="px-1 font-semibold" x-text="editItemShares[person] || 0"></span>
+                            <button type="button" @click="adjustShare(editItemShares, person, 1)" class="px-1.5 py-1 font-bold">+</button>
+                          </div>
+                        </div>
                       </template>
                     </div>
                   </div>
@@ -317,6 +377,7 @@
           </div>
         </section>
 
+        <!-- SECTION 3: DISCOUNTS, TAX, TIP & FEES -->
         <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors duration-200">
           <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <i data-lucide="calculator" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
@@ -328,14 +389,7 @@
               <label class="block text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">Discount / Coupon ($)</label>
               <div class="relative">
                 <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="0" 
-                  x-model.number="discount" 
-                  placeholder="0.00" 
-                  class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-                >
+                <input type="number" step="0.01" min="0" x-model.number="discount" placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
               </div>
             </div>
 
@@ -343,14 +397,7 @@
               <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tax Total ($)</label>
               <div class="relative">
                 <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="0" 
-                  x-model.number="tax" 
-                  placeholder="0.00" 
-                  class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                >
+                <input type="number" step="0.01" min="0" x-model.number="tax" placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
               </div>
             </div>
 
@@ -358,14 +405,7 @@
               <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Tip Paid ($)</label>
               <div class="relative">
                 <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="0" 
-                  x-model.number="tip" 
-                  placeholder="0.00" 
-                  class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                >
+                <input type="number" step="0.01" min="0" x-model.number="tip" placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
               </div>
             </div>
 
@@ -373,14 +413,7 @@
               <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Service Charge ($)</label>
               <div class="relative">
                 <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="0" 
-                  x-model.number="serviceCharge" 
-                  placeholder="0.00" 
-                  class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                >
+                <input type="number" step="0.01" min="0" x-model.number="serviceCharge" placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
               </div>
             </div>
 
@@ -388,14 +421,7 @@
               <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Other Fees ($)</label>
               <div class="relative">
                 <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="0" 
-                  x-model.number="otherFees" 
-                  placeholder="0.00" 
-                  class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                >
+                <input type="number" step="0.01" min="0" x-model.number="otherFees" placeholder="0.00" class="w-full pl-7 pr-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
               </div>
             </div>
           </div>
@@ -403,8 +429,8 @@
 
       </div>
 
+      <!-- RIGHT COLUMN: SPLIT SUMMARY -->
       <div class="space-y-6">
-
         <section class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 sticky top-6 transition-colors duration-200">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
@@ -502,11 +528,8 @@
               class="rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 w-full max-w-[220px] object-cover"
             >
           </div>
-
         </section>
-
       </div>
-
     </div>
 
     <!-- TAB 2: QUICK TIP + SPLIT CALCULATOR -->
@@ -516,62 +539,35 @@
           <i data-lucide="calculator" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
           Quick Tip + Split Calculator
         </h2>
-
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Bill Total ($)</label>
             <div class="relative">
               <span class="absolute left-3.5 top-2.5 text-slate-400 text-base">$</span>
-              <input 
-                type="number" 
-                step="0.01" 
-                min="0" 
-                x-model.number="quickBill" 
-                placeholder="0.00" 
-                class="w-full pl-8 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-base focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
+              <input type="number" step="0.01" min="0" x-model.number="quickBill" placeholder="0.00" class="w-full pl-8 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-base focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
           </div>
-
           <div>
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Tip Percentage (%)</label>
             <div class="grid grid-cols-4 gap-2 mb-2">
               <template x-for="pct in [15, 18, 20, 25]" :key="pct">
-                <button 
-                  type="button" 
-                  @click="quickTipPercent = pct" 
-                  class="py-2 px-3 rounded-xl border text-sm font-semibold transition"
-                  :class="quickTipPercent === pct ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600'"
-                  x-text="pct + '%'"
-                ></button>
+                <button type="button" @click="quickTipPercent = pct" class="py-2 px-3 rounded-xl border text-sm font-semibold transition" :class="quickTipPercent === pct ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600'" x-text="pct + '%'"></button>
               </template>
             </div>
             <div class="relative">
-              <input 
-                type="number" 
-                step="0.5" 
-                min="0" 
-                x-model.number="quickTipPercent" 
-                placeholder="Custom Tip %" 
-                class="w-full pr-8 pl-4 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
+              <input type="number" step="0.5" min="0" x-model.number="quickTipPercent" placeholder="Custom Tip %" class="w-full pr-8 pl-4 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
               <span class="absolute right-3.5 top-2 text-slate-400 text-sm">%</span>
             </div>
           </div>
-
           <div>
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Split Between How Many People?</label>
-            <select 
-              x-model.number="quickPeople" 
-              class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-            >
+            <select x-model.number="quickPeople" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
               <template x-for="n in 20" :key="n">
                 <option :value="n" x-text="n + (n === 1 ? ' Person' : ' People')"></option>
               </template>
             </select>
           </div>
         </div>
-
         <div class="bg-indigo-50 dark:bg-slate-900 p-5 rounded-2xl border border-indigo-100 dark:border-slate-700 space-y-3">
           <div class="flex justify-between text-sm text-slate-600 dark:text-slate-400">
             <span>Tip Amount (<span x-text="quickTipPercent || 0"></span>%):</span>
@@ -600,36 +596,23 @@
           Quick Split Calculator
         </h2>
         <p class="text-xs text-slate-500 dark:text-slate-400 -mt-4">Use this when tax and tip are already included in your final bill amount.</p>
-
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Total Amount ($)</label>
             <div class="relative">
               <span class="absolute left-3.5 top-2.5 text-slate-400 text-base">$</span>
-              <input 
-                type="number" 
-                step="0.01" 
-                min="0" 
-                x-model.number="quickSplitTotal" 
-                placeholder="0.00" 
-                class="w-full pl-8 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-base focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
+              <input type="number" step="0.01" min="0" x-model.number="quickSplitTotal" placeholder="0.00" class="w-full pl-8 pr-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-base focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
           </div>
-
           <div>
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Split Between How Many People?</label>
-            <select 
-              x-model.number="quickSplitPeople" 
-              class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-            >
+            <select x-model.number="quickSplitPeople" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
               <template x-for="n in 20" :key="n">
                 <option :value="n" x-text="n + (n === 1 ? ' Person' : ' People')"></option>
               </template>
             </select>
           </div>
         </div>
-
         <div class="bg-indigo-50 dark:bg-slate-900 p-5 rounded-2xl border border-indigo-100 dark:border-slate-700 space-y-3">
           <div class="flex justify-between items-center">
             <div>
@@ -648,7 +631,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
 
-      // Native Event Listener specifically for Brave browser strict gesture requirements
       const btnGroup = document.getElementById('btnCopyGroup');
       if (btnGroup) {
         btnGroup.addEventListener('click', (e) => {
@@ -671,7 +653,7 @@
         editingIndex: null,
         editItemName: '',
         editItemPrice: '',
-        editItemAssignees: [],
+        editItemShares: {},
         copiedGroup: false,
         copiedPerson: null,
         savedRepo: JSON.parse(localStorage.getItem('cs_savedRepo')) || ['Tim'],
@@ -681,19 +663,17 @@
         items: JSON.parse(localStorage.getItem('cs_items')) || [],
         newItemName: '',
         newItemPrice: '',
-        newItemAssignees: [],
+        newItemShares: {},
         discount: parseFloat(localStorage.getItem('cs_discount')) || 0,
         tax: parseFloat(localStorage.getItem('cs_tax')) || 0,
         tip: parseFloat(localStorage.getItem('cs_tip')) || 0,
         serviceCharge: parseFloat(localStorage.getItem('cs_serviceCharge')) || 0,
         otherFees: parseFloat(localStorage.getItem('cs_otherFees')) || 0,
 
-        // Tab 2: Quick Tip + Split State
         quickBill: parseFloat(localStorage.getItem('cs_quickBill')) || '',
         quickTipPercent: parseFloat(localStorage.getItem('cs_quickTipPercent')) || 20,
         quickPeople: parseInt(localStorage.getItem('cs_quickPeople')) || 1,
 
-        // Tab 3: Quick Split State
         quickSplitTotal: parseFloat(localStorage.getItem('cs_quickSplitTotal')) || '',
         quickSplitPeople: parseInt(localStorage.getItem('cs_quickSplitPeople')) || 1,
 
@@ -702,6 +682,17 @@
             if (!this.payerMap[p]) {
               this.payerMap[p] = p;
             }
+          });
+
+          // Migrate any legacy items from assignees[] to shares{}
+          this.items = this.items.map(item => {
+            if (!item.shares) {
+              const shares = {};
+              const list = Array.isArray(item.assignees) && item.assignees.length > 0 ? item.assignees : this.people;
+              list.forEach(p => shares[p] = 1);
+              return { name: item.name, price: item.price, shares };
+            }
+            return item;
           });
 
           this.$watch('people', val => localStorage.setItem('cs_people', JSON.stringify(val)));
@@ -719,6 +710,61 @@
           this.$watch('quickPeople', val => localStorage.setItem('cs_quickPeople', val));
           this.$watch('quickSplitTotal', val => localStorage.setItem('cs_quickSplitTotal', val));
           this.$watch('quickSplitPeople', val => localStorage.setItem('cs_quickSplitPeople', val));
+        },
+
+        // --- SHARE HELPERS ---
+        toggleShare(shareObj, person) {
+          if ((shareObj[person] || 0) > 0) {
+            delete shareObj[person];
+          } else {
+            shareObj[person] = 1;
+          }
+        },
+
+        adjustShare(shareObj, person, delta) {
+          const next = Math.max(0, (shareObj[person] || 0) + delta);
+          if (next === 0) {
+            delete shareObj[person];
+          } else {
+            shareObj[person] = next;
+          }
+        },
+
+        totalShares(shareObj) {
+          if (!shareObj) return 0;
+          return Object.values(shareObj).reduce((sum, count) => sum + Number(count || 0), 0);
+        },
+
+        buildCleanShares(shareObj) {
+          const clean = {};
+          Object.entries(shareObj || {}).forEach(([person, count]) => {
+            if (this.people.includes(person) && count > 0) {
+              clean[person] = Number(count);
+            }
+          });
+          // Default to 1 share per active diner if nobody was explicitly selected
+          if (Object.keys(clean).length === 0) {
+            this.people.forEach(p => clean[p] = 1);
+          }
+          return clean;
+        },
+
+        formatItemSplit(item) {
+          const shares = item.shares || {};
+          const entries = Object.entries(shares).filter(([p, count]) => this.people.includes(p) && count > 0);
+          
+          if (entries.length === 0) return 'Everyone (Evenly)';
+          
+          // Check if everyone has the exact same share count (e.g., all 1s)
+          const allEqual = entries.every(([, count]) => count === entries[0][1]);
+          if (allEqual) {
+            return entries.length === this.people.length 
+              ? 'Everyone (Evenly)' 
+              : entries.map(([p]) => p).join(', ');
+          }
+
+          // Otherwise show quantities/ratios (e.g., "Tim (2), Sarah (1)")
+          return entries.map(([p, count]) => `${p} (${count})`).join(', ');
         },
 
         toggleDarkMode() {
@@ -763,6 +809,9 @@
         removePerson(name) {
           this.people = this.people.filter(p => p !== name);
           delete this.payerMap[name];
+          delete this.newItemShares[name];
+          delete this.editItemShares[name];
+
           Object.keys(this.payerMap).forEach(key => {
             if (this.payerMap[key] === name) {
               this.payerMap[key] = key;
@@ -770,9 +819,11 @@
           });
           
           this.items.forEach(item => {
-            item.assignees = item.assignees.filter(p => p !== name);
-            if (item.assignees.length === 0 && this.people.length > 0) {
-              item.assignees = [...this.people];
+            if (item.shares) {
+              delete item.shares[name];
+              if (this.totalShares(item.shares) === 0 && this.people.length > 0) {
+                this.people.forEach(p => item.shares[p] = 1);
+              }
             }
           });
           this.refreshIcons();
@@ -788,11 +839,11 @@
             this.items.push({
               name: this.newItemName.trim(),
               price: price,
-              assignees: this.newItemAssignees.length > 0 ? [...this.newItemAssignees] : [...this.people]
+              shares: this.buildCleanShares(this.newItemShares)
             });
             this.newItemName = '';
             this.newItemPrice = '';
-            this.newItemAssignees = [];
+            this.newItemShares = {};
             this.refreshIcons();
           }
         },
@@ -801,7 +852,7 @@
           this.editingIndex = index;
           this.editItemName = this.items[index].name;
           this.editItemPrice = this.items[index].price;
-          this.editItemAssignees = [...this.items[index].assignees];
+          this.editItemShares = { ...(this.items[index].shares || {}) };
         },
 
         cancelEditItem() {
@@ -813,7 +864,7 @@
           if (this.editItemName.trim() && !isNaN(price) && price > 0) {
             this.items[index].name = this.editItemName.trim();
             this.items[index].price = price;
-            this.items[index].assignees = this.editItemAssignees.length > 0 ? [...this.editItemAssignees] : [...this.people];
+            this.items[index].shares = this.buildCleanShares(this.editItemShares);
             this.editingIndex = null;
             this.refreshIcons();
           }
@@ -828,6 +879,8 @@
           this.people = [];
           this.payerMap = {};
           this.items = [];
+          this.newItemShares = {};
+          this.editItemShares = {};
           this.discount = 0;
           this.tax = 0;
           this.tip = 0;
@@ -960,14 +1013,21 @@
           if (this.people.length === 0) return summary;
 
           this.items.forEach(item => {
-            const assignees = item.assignees.length > 0 ? item.assignees : this.people;
-            const splitPrice = item.price / assignees.length;
+            const shares = item.shares || {};
+            const activeEntries = Object.entries(shares).filter(([p, count]) => this.people.includes(p) && count > 0);
 
-            assignees.forEach(p => {
-              if (summary[p]) {
+            if (activeEntries.length > 0) {
+              const sumShares = activeEntries.reduce((acc, [, count]) => acc + Number(count), 0);
+              activeEntries.forEach(([p, count]) => {
+                summary[p].subtotal += item.price * (Number(count) / sumShares);
+              });
+            } else {
+              // Fallback: split evenly among all active people
+              const splitPrice = item.price / this.people.length;
+              this.people.forEach(p => {
                 summary[p].subtotal += splitPrice;
-              }
-            });
+              });
+            }
           });
 
           const currentSubtotal = this.subtotal;
